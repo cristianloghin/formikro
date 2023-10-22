@@ -1,21 +1,14 @@
-// import { useCallback, useEffect, useState, useRef } from 'react';
-// import { FieldValue } from '../core/types';
 import { FieldProps } from '../core/types';
-// import { FormikroClass, Observer } from '../core/Form';
-
-// import { Actions } from '../core/actions';
-import { useFieldValue } from '../hooks';
+import { useFieldValue, useFieldStage } from '../hooks';
 import FormObject from '../core/FormObject';
+import { useCallback } from 'react';
 
 export interface InputProps<T> extends FieldProps<T> {}
 
 export function Input<T>(Form: FormObject, { id, label }: FieldProps<T>) {
   const value = useFieldValue(Form, id);
-
-  // const handleInput = useInput(dispatch, [formId, id], required);
-  // const { value, isValid } = useInputData(Form, formId, stageId, id);
-
-  // const dispatch = useFormDispatch(formId);
+  const stageId = useFieldStage(Form, id);
+  const handleInput = useInput(Form, stageId, id);
 
   return (
     <div style={{ marginTop: '1rem' }}>
@@ -31,19 +24,31 @@ export function Input<T>(Form: FormObject, { id, label }: FieldProps<T>) {
           form={Form?.id}
           type='text'
           value={value || ''}
-          onChange={() => {}}
-          // onInput={handleInput}
-          // onChange={(e) =>
-          //   dispatch('setFieldValue', {
-          //     stageId,
-          //     fieldId: id,
-          //     value: e.target.value,
-          //   })
-          // }
+          onChange={handleInput}
         />
       </div>
     </div>
   );
+}
+
+function useInput(Form: FormObject, stageId: string, fieldId: string) {
+  const dispatch = Form.dispatch;
+
+  const handleInput = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) =>
+      dispatch(
+        'SET_FIELD_VALUE',
+        {
+          fieldId,
+          stageId,
+          value: e.target.value,
+        },
+        [stageId, fieldId]
+      ),
+    [dispatch, stageId, fieldId]
+  );
+
+  return handleInput;
 }
 
 // function useInput(
@@ -83,36 +88,6 @@ export function Input<T>(Form: FormObject, { id, label }: FieldProps<T>) {
 //   );
 
 //   return handleInput;
-// }
-
-// function useInputData(
-//   Form: FormikroClass,
-//   formId: string,
-//   stageId: string,
-//   fieldId: string
-// ) {
-//   const observerId = useRef(Math.random().toString(36).substring(2, 8));
-//   const [value, setValue] = useState<FieldValue>();
-//   const [isValid, setIsValid] = useState<boolean>(false);
-
-//   const fieldObserver = useCallback<Observer>(
-//     (form) => {
-//       // const fieldData = form.getField(formId, fieldId)!;
-//       const fieldData = form.fields.get(fieldId)!;
-//       setValue(fieldData.value);
-//       setIsValid(fieldData.isValid);
-//     },
-//     [fieldId]
-//   );
-
-//   useEffect(() => {
-//     const id = observerId.current;
-//     Form.addObserver([formId, stageId, fieldId], [id, fieldObserver]);
-
-//     return () => Form.removeObserver([formId, fieldId], id);
-//   }, [Form, formId, stageId, fieldId, fieldObserver]);
-
-//   return { value, isValid };
 // }
 
 /* UTILS */

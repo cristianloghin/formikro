@@ -1,26 +1,36 @@
-import FormObject from './FormObject';
+import { FormObserver, FormState } from './types';
 
 // A centralized EventBus that both mutates state and notifies observers
-type FormObserver = (form: FormObject) => void;
 
-interface EventBus {
-  subscribe(action: string, observer: FormObserver): void;
-  publish(action: string, form: FormObject): void;
-}
+class FormEventBus {
+  private observers = new Map<string, Map<string, FormObserver>>();
 
-class FormEventBus implements EventBus {
-  private observers: Record<string, FormObserver[]> = {};
+  subscribe(action: string, observer: FormObserver, uid: string) {
+    if (!this.observers.has(action)) {
+      const observerMap = new Map<string, FormObserver>();
+      observerMap.set(uid, observer);
 
-  subscribe(action: string, observer: FormObserver) {
-    if (!this.observers[action]) {
-      this.observers[action] = [];
+      this.observers.set(action, observerMap);
     }
-    this.observers[action].push(observer);
   }
 
-  publish(action: string, form: FormObject) {
-    if (this.observers[action]) {
-      this.observers[action].forEach((observer) => observer(form));
+  unsubscribe(action: string, uid: string) {
+    this.observers.get(action)?.delete(uid);
+    if (this.observers.get(action)?.size === 0) {
+      this.observers.delete(action);
+    }
+  }
+
+  publish(state: FormState, action: string, path: string[] | undefined) {
+    if (path) {
+      const target = `${action}:${path.join(':')}`;
+      const targetObservers = this.observers.get(target);
+
+      if (targetObservers) {
+        targetObservers.forEach((callback) => {
+          callback(state);
+        });
+      }
     }
   }
 }

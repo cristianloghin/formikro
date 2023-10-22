@@ -1,26 +1,31 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { FormObserver } from './types';
+import { FormObserver, FormState } from './types';
 // import FormStateManager, { FormState } from './StateManager';
-// import FormWorker from './Worker';
-// import FormEventBus from './EventBus';
 import StageObject from './StageObject';
 import FieldObject from './FieldObject';
+import FormCommand from './Command';
+import FormWorker, { FORM_ACTIONS } from './Worker';
+import FormEventBus from './EventBus';
 
 class FormObject {
-  // private worker = new FormWorker();
-  // private eventBus = new FormEventBus();
+  private worker = new FormWorker();
+  private eventBus = new FormEventBus();
 
   id: string;
   // currentState: FormState;
   // stateManager: FormStateManager;
-  stages = new Map<string, StageObject>();
+  state: FormState = {
+    stages: new Map<string, StageObject>(),
+  };
 
   constructor(id: string, data: Record<string, Record<string, any>>) {
     this.id = id;
 
     Object.entries(data).forEach(([stage, fields]) => {
-      this.stages.set(stage, new StageObject(stage, fields));
+      this.state.stages.set(stage, new StageObject(stage, fields));
     });
+
+    this.dispatch = this.dispatch.bind(this);
 
     // this.stateManager = new FormStateManager(stages);
     // this.stages = new Map(
@@ -37,7 +42,7 @@ class FormObject {
 
   getField(fieldId: string): FieldObject {
     let Field;
-    this.stages.forEach((stage) => {
+    this.state.stages.forEach((stage) => {
       if (stage.fields.has(fieldId)) {
         Field = stage.fields.get(fieldId);
       }
@@ -45,16 +50,26 @@ class FormObject {
     return Field as unknown as FieldObject;
   }
 
-  dispatch(action: any, payload: any) {
-    console.log('Dispatch', action, payload);
+  dispatch<ActionType extends keyof typeof FORM_ACTIONS>(
+    action: ActionType,
+    payload: Parameters<(typeof FORM_ACTIONS)[ActionType]>[0],
+    actionPath?: string[]
+  ) {
+    const command = new FormCommand(this.worker, action, payload, this.state);
+
+    // Mutate state using command
+    this.state = command.execute();
+
+    // Notify observers
+    this.eventBus.publish(this.state, action, actionPath);
   }
 
   subscribe(action: string, observer: FormObserver, observerId: string) {
-    console.log('Subscribe', action, observerId);
+    this.eventBus.subscribe(action, observer, observerId);
   }
 
-  unsubscribe(observerId: string) {
-    console.log('Unsubscribe observer', observerId);
+  unsubscribe(action: string, observerId: string) {
+    this.eventBus.unsubscribe(action, observerId);
   }
 }
 

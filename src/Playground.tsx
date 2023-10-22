@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { useFormikro } from '../lib/main';
 
 type FooForm = {
@@ -10,9 +11,22 @@ type FooForm = {
 type BarForm = {
   trousers: string;
   maker: string;
-  size: number;
-  color: 'red' | 'blue';
+  dimensions: number;
+  shade: 'red' | 'blue';
 };
+
+function delayedOptions() {
+  return new Promise<[string, string][]>((resolve) => {
+    setTimeout(
+      () =>
+        resolve([
+          ['Red Color', 'RED_VALUE'],
+          ['Blue Color', 'BLUE_VALUE'],
+        ]),
+      1000
+    );
+  });
+}
 
 function saveFoo(data: FooForm) {
   return new Promise<void>((resolve) => {
@@ -34,6 +48,17 @@ export function Playground() {
   const canSubmitBar = false;
   const canSubmitFoo = false;
 
+  const [colorOptions, setColorOptions] = useState<[string, string][]>([]);
+
+  useEffect(() => {
+    async function fetchColors() {
+      const colors = await delayedOptions();
+      setColorOptions(colors);
+    }
+
+    fetchColors();
+  }, []);
+
   const FooForm = useFormikro<FooForm, StagesFoo>('fooBarForm', {
     onSubmit: saveFoo,
     multiStage: true,
@@ -54,6 +79,9 @@ export function Playground() {
       BAR: {
         color: {
           isRequired: true,
+          sideEffects: {
+            clear: ['brand', 'pants'],
+          },
         },
       },
     },
@@ -70,11 +98,11 @@ export function Playground() {
         isRequired: false,
         initialValue: 'Joes',
       },
-      size: {
+      dimensions: {
         isRequired: true,
         initialValue: 30,
       },
-      color: {
+      shade: {
         isRequired: false,
         initialValue: 'red',
       },
@@ -102,8 +130,8 @@ export function Playground() {
           <BarForm>
             <BarForm.Input id='trousers' label='Trousers' />
             <BarForm.Input id='maker' label='Maker' />
-            <BarForm.Input id='size' label='Size' />
-            <BarForm.Input id='color' label='Color' />
+            <BarForm.Input id='dimensions' label='Dimensions' />
+            <BarForm.Input id='shade' label='Shade' />
           </BarForm>
         </div>
         <div>
@@ -129,7 +157,7 @@ export function Playground() {
               <FooForm.Input id='size' label='Size' />
             </FooForm.Stage>
             <FooForm.Stage name='BAR'>
-              <FooForm.Input id='color' label='Color' />
+              <FooForm.Select id='color' label='Color' options={colorOptions} />
             </FooForm.Stage>
           </FooForm>
         </div>

@@ -1,9 +1,8 @@
-import FieldObject from './FieldObject';
-import FormObject from './FormObject';
 import { FieldValue } from './State';
+import { FormState } from './types';
 
 export const FORM_ACTIONS = {
-  setFieldValue:
+  SET_FIELD_VALUE:
     ({
       stageId,
       fieldId,
@@ -13,34 +12,27 @@ export const FORM_ACTIONS = {
       fieldId: string;
       value: FieldValue;
     }) =>
-    (form: FormObject) => {
-      const field = form.stages.get(stageId)?.fields.get(fieldId);
-      if (field) {
-        console.log('Set value:', value, 'on:', fieldId);
-        field.value = value;
+    (state: FormState) => {
+      const Field = state.stages.get(stageId)?.fields.get(fieldId);
+      if (Field) {
+        Field.value = value;
+        console.log(Field);
+        if (Field.sideEffects) {
+          console.log('Run Side Effects', Field.sideEffects);
+        }
       }
+      return state;
     },
 } as const;
 
-interface Worker {
+class FormWorker {
   mutateState<ActionType extends keyof typeof FORM_ACTIONS>(
     action: ActionType,
     payload: Parameters<(typeof FORM_ACTIONS)[ActionType]>[0],
-    form: FormObject
-  ): FormObject;
-}
-
-class FormWorker implements Worker {
-  mutateState<ActionType extends keyof typeof FORM_ACTIONS>(
-    action: ActionType,
-    payload: Parameters<(typeof FORM_ACTIONS)[ActionType]>[0],
-    form: FormObject
-  ): FormObject {
-    const newForm = { ...form };
-
-    FORM_ACTIONS[action](payload)(newForm);
-
-    return newForm;
+    state: FormState
+  ): FormState {
+    const newState = { ...state };
+    return FORM_ACTIONS[action](payload)(newState);
   }
 }
 
