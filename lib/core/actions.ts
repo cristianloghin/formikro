@@ -8,6 +8,7 @@ export interface Actions extends Record<string, any> {
   // ) => void;
 
   setFieldValue: (payload: {
+    stageId: string;
     fieldId: string;
     value: FieldValue;
   }) => (state: FormState) => FormState;

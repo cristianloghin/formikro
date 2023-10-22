@@ -28,23 +28,56 @@ function saveBar(data: BarForm) {
   });
 }
 
-const stages = ['FOO', 'BANG', 'BAR'];
+type StagesFoo = 'FOO' | 'BANG' | 'BAR';
 
 export function Playground() {
   const canSubmitBar = false;
   const canSubmitFoo = false;
 
-  const FooForm = useFormikro<FooForm>('fooBarForm', {
+  const FooForm = useFormikro<FooForm, StagesFoo>('fooBarForm', {
     onSubmit: saveFoo,
-    stages,
+    multiStage: true,
+    data: {
+      FOO: {
+        pants: {
+          isRequired: true,
+        },
+        brand: {
+          isRequired: false,
+        },
+      },
+      BANG: {
+        size: {
+          isRequired: true,
+        },
+      },
+      BAR: {
+        color: {
+          isRequired: true,
+        },
+      },
+    },
   });
+
   const BarForm = useFormikro<BarForm>('barBarFoo', {
     onSubmit: saveBar,
-    initialValues: {
-      trousers: 'Pantaloons',
-      maker: 'Joes',
-      size: 30,
-      color: 'blue',
+    data: {
+      trousers: {
+        isRequired: true,
+        initialValue: 'Pantaloons',
+      },
+      maker: {
+        isRequired: false,
+        initialValue: 'Joes',
+      },
+      size: {
+        isRequired: true,
+        initialValue: 30,
+      },
+      color: {
+        isRequired: false,
+        initialValue: 'red',
+      },
     },
   });
 
@@ -67,7 +100,7 @@ export function Playground() {
             <button disabled={!canSubmitBar}>Submit</button>
           </div>
           <BarForm>
-            <BarForm.Input id='trousers' label='Trousers' required />
+            <BarForm.Input id='trousers' label='Trousers' />
             <BarForm.Input id='maker' label='Maker' />
             <BarForm.Input id='size' label='Size' />
             <BarForm.Input id='color' label='Color' />
@@ -90,7 +123,7 @@ export function Playground() {
           <FooForm>
             <FooForm.Stage name='FOO'>
               <FooForm.Input id='pants' label='Pants' />
-              <FooForm.Input id='brand' label='Brand' required />
+              <FooForm.Input id='brand' label='Brand' />
             </FooForm.Stage>
             <FooForm.Stage name='BANG'>
               <FooForm.Input id='size' label='Size' />

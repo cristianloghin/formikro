@@ -1,1 +1,1 @@
-export { useFormikro } from './core/useFormikro';
+export { useFormikro } from './hooks/useFormikro';

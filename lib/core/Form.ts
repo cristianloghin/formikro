@@ -11,12 +11,6 @@ export type Event = {
 
 export type FieldValue = string | number | undefined;
 
-export type FormOptions<T extends Record<string, FieldValue>> = {
-  onSubmit: (data: T) => Promise<unknown>;
-  initialValues?: T;
-  stages?: string[];
-};
-
 export type Field = {
   isValid: boolean;
   stageId: string;
