@@ -4,7 +4,8 @@ import { FormObserver, FormState } from './types';
 import StageObject from './StageObject';
 import FieldObject from './FieldObject';
 import FormCommand from './Command';
-import FormWorker, { FORM_ACTIONS } from './Worker';
+import FormWorker from './Worker';
+import formActions from './actions';
 import FormEventBus from './EventBus';
 
 class FormObject {
@@ -50,9 +51,9 @@ class FormObject {
     return Field as unknown as FieldObject;
   }
 
-  dispatch<ActionType extends keyof typeof FORM_ACTIONS>(
+  dispatch<ActionType extends keyof typeof formActions>(
     action: ActionType,
-    payload: Parameters<(typeof FORM_ACTIONS)[ActionType]>[0],
+    payload: Parameters<(typeof formActions)[ActionType]>[0],
     actionPath?: string[]
   ) {
     const command = new FormCommand(this.worker, action, payload, this.state);

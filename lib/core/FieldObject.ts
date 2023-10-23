@@ -6,6 +6,7 @@ import { FieldSideEffects } from './types';
 class FieldObject {
   id: string;
   stageId: string;
+  isRequired: boolean;
   initialValue: FieldValue;
   value: FieldValue;
   sideEffects?: FieldSideEffects<Record<string, any>>;
@@ -15,6 +16,7 @@ class FieldObject {
   constructor(id: string, stageId: string, data: Record<string, any>) {
     this.id = id;
     this.stageId = stageId;
+    this.isRequired = data.isRequired;
     this.initialValue = data.initialValue;
     this.value = data.initialValue;
     this.sideEffects = data.sideEffects;

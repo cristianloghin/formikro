@@ -1,20 +1,19 @@
 import { FieldProps } from '../core/types';
-import { useFieldValue, useFieldStage } from '../hooks';
+import { useFieldValue, useFieldActions } from '../hooks';
 import FormObject from '../core/FormObject';
-import { useCallback } from 'react';
 
 export interface InputProps<T> extends FieldProps<T> {}
 
 export function Input<T>(Form: FormObject, { id, label }: FieldProps<T>) {
-  const value = useFieldValue(Form, id);
-  const stageId = useFieldStage(Form, id);
-  const handleInput = useInput(Form, stageId, id);
+  const { value, isRequired } = useFieldValue(Form, id);
+  const handleInput = useFieldActions(Form, id);
 
   return (
     <div style={{ marginTop: '1rem' }}>
       {label && (
         <label htmlFor={id}>
           {label}
+          {isRequired && '*'}
           {/* {isValid ? ' (valid)' : ' (invalid)'} */}
         </label>
       )}
@@ -29,26 +28,6 @@ export function Input<T>(Form: FormObject, { id, label }: FieldProps<T>) {
       </div>
     </div>
   );
-}
-
-function useInput(Form: FormObject, stageId: string, fieldId: string) {
-  const dispatch = Form.dispatch;
-
-  const handleInput = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) =>
-      dispatch(
-        'SET_FIELD_VALUE',
-        {
-          fieldId,
-          stageId,
-          value: e.target.value,
-        },
-        [stageId, fieldId]
-      ),
-    [dispatch, stageId, fieldId]
-  );
-
-  return handleInput;
 }
 
 // function useInput(

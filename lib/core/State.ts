@@ -3,26 +3,15 @@ import { DynamicFields } from '../core/types';
 
 export type FieldValue = string | number | undefined;
 
-export interface Formikro {
-  initialize<T>(formId: string, stages: Record<string, DynamicFields<T>>): void;
-  // canTransitionTo(
-  //   formId: string,
-  //   nodeType: NodeType,
-  //   nextStage: string
-  // ): boolean;
-  // transitionTo(formId: string, nextStage: string): void;
-  // dispatch(formId: string, action: string, payload: unknown): void;
-}
-
-class Form implements Formikro {
-  private static instance: Form;
+class Formikro {
+  private static instance: Formikro;
   private forms = new Map<string, FormObject>();
 
-  static getInstance(): Form {
-    if (!Form.instance) {
-      Form.instance = new Form();
+  static getInstance(): Formikro {
+    if (!Formikro.instance) {
+      Formikro.instance = new Formikro();
     }
-    return Form.instance;
+    return Formikro.instance;
   }
 
   initialize<T>(
@@ -73,5 +62,5 @@ class Form implements Formikro {
   // }
 }
 
-const instance = Form.getInstance();
+const instance = Formikro.getInstance();
 export default instance;

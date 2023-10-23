@@ -21,5 +21,5 @@ export function useFieldValue(Form: FormObject, fieldId: string) {
     return () => Form?.unsubscribe(action, observerId);
   }, [Form, Field, fieldObserver]);
 
-  return value;
+  return { value, isRequired: Field.isRequired };
 }

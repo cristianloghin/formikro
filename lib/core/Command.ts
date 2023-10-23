@@ -1,4 +1,5 @@
-import FormWorker, { FORM_ACTIONS } from './Worker';
+import FormWorker from './Worker';
+import formActions from './actions';
 import { FormState } from './types';
 
 export interface Command {
@@ -8,15 +9,15 @@ export interface Command {
 class FormCommand implements Command {
   constructor(
     private worker: FormWorker,
-    private action: keyof typeof FORM_ACTIONS,
+    private action: keyof typeof formActions,
     private payload: unknown,
     private state: FormState
   ) {}
 
   execute() {
     const newForm = this.worker.mutateState(
-      this.action as keyof typeof FORM_ACTIONS,
-      this.payload as Parameters<(typeof FORM_ACTIONS)[typeof this.action]>[0],
+      this.action as keyof typeof formActions,
+      this.payload as Parameters<(typeof formActions)[typeof this.action]>[0],
       this.state
     );
 

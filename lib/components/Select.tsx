@@ -1,7 +1,6 @@
-import { useCallback } from 'react';
 import FormObject from '../core/FormObject';
 import { FieldProps } from '../core/types';
-import { useFieldValue, useFieldStage } from '../hooks';
+import { useFieldValue, useFieldActions } from '../hooks';
 
 export interface SelectProps<T> extends FieldProps<T> {
   options: [label: string, value: string][];
@@ -11,15 +10,15 @@ export function Select<T>(
   Form: FormObject,
   { id, label, options }: SelectProps<T>
 ) {
-  const selectedValue = useFieldValue(Form, id);
-  const stageId = useFieldStage(Form, id);
-  const handleChange = useSelect(Form, stageId, id);
+  const { value: selectedValue, isRequired } = useFieldValue(Form, id);
+  const handleChange = useFieldActions(Form, id);
 
   return (
     <div style={{ marginTop: '1rem' }}>
       {label && (
         <label htmlFor={id}>
           {label}
+          {isRequired && '*'}
           {/* {isValid ? ' (valid)' : ' (invalid)'} */}
         </label>
       )}
@@ -42,24 +41,4 @@ export function Select<T>(
       </div>
     </div>
   );
-}
-
-function useSelect(Form: FormObject, stageId: string, fieldId: string) {
-  const dispatch = Form.dispatch;
-
-  const handleInput = useCallback(
-    (e: React.ChangeEvent<HTMLSelectElement>) =>
-      dispatch(
-        'SET_FIELD_VALUE',
-        {
-          fieldId,
-          stageId,
-          value: e.target.value,
-        },
-        [stageId, fieldId]
-      ),
-    [dispatch, stageId, fieldId]
-  );
-
-  return handleInput;
 }
