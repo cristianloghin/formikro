@@ -1,14 +1,17 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { FormState } from './types';
-import formActions from './actions';
+import formActions, { ActionKey, ActionPayload } from './actions';
 
 class FormWorker {
-  mutateState<ActionType extends keyof typeof formActions>(
-    action: ActionType,
-    payload: Parameters<(typeof formActions)[ActionType]>[0],
+  mutateState(
+    action: ActionKey,
+    payload: ActionPayload<ActionKey>,
     state: FormState
   ): FormState {
     const newState = { ...state };
-    return formActions[action](payload)(newState);
+    const actionCallback = formActions[action] as any; // ¯\_(ツ)_/¯
+
+    return actionCallback(payload)(newState);
   }
 }
 

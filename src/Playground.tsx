@@ -45,9 +45,6 @@ function saveBar(data: BarForm) {
 type StagesFoo = 'FOO' | 'BANG' | 'BAR';
 
 export function Playground() {
-  const canSubmitBar = false;
-  const canSubmitFoo = false;
-
   const [colorOptions, setColorOptions] = useState<[string, string][]>([]);
 
   useEffect(() => {
@@ -59,7 +56,10 @@ export function Playground() {
     fetchColors();
   }, []);
 
-  const FooForm = useFormikro<FooForm, StagesFoo>('fooBarForm', {
+  const { ComposedForm: FooForm, isSubmittable: fooSubmittable } = useFormikro<
+    FooForm,
+    StagesFoo
+  >('FooForm', {
     onSubmit: saveFoo,
     multiStage: true,
     data: {
@@ -87,27 +87,28 @@ export function Playground() {
     },
   });
 
-  const BarForm = useFormikro<BarForm>('barBarFoo', {
-    onSubmit: saveBar,
-    data: {
-      trousers: {
-        isRequired: true,
-        initialValue: 'Pantaloons',
+  const { ComposedForm: BarForm, isSubmittable: barSubmittable } =
+    useFormikro<BarForm>('BarForm', {
+      onSubmit: saveBar,
+      data: {
+        trousers: {
+          isRequired: true,
+          initialValue: 'Pantaloons',
+        },
+        maker: {
+          isRequired: false,
+          initialValue: 'Joes',
+        },
+        dimensions: {
+          isRequired: true,
+          initialValue: 30,
+        },
+        shade: {
+          isRequired: false,
+          initialValue: 'red',
+        },
       },
-      maker: {
-        isRequired: false,
-        initialValue: 'Joes',
-      },
-      dimensions: {
-        isRequired: true,
-        initialValue: 30,
-      },
-      shade: {
-        isRequired: false,
-        initialValue: 'red',
-      },
-    },
-  });
+    });
 
   return (
     <>
@@ -125,7 +126,7 @@ export function Playground() {
             }}
           >
             <button disabled>Reset</button>
-            <button disabled={!canSubmitBar}>Submit</button>
+            <button disabled={!barSubmittable}>Submit</button>
           </div>
           <BarForm>
             <BarForm.Input id='trousers' label='Trousers' />
@@ -146,7 +147,7 @@ export function Playground() {
             <button disabled>Reset</button>
             <button disabled>Previous</button>
             <button disabled>Next</button>
-            <button disabled={!canSubmitFoo}>Submit</button>
+            <button disabled={!fooSubmittable}>Submit</button>
           </div>
           <FooForm>
             <FooForm.Stage name='FOO'>

@@ -1,44 +1,26 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import FormObject from '../core/FormObject';
-import { FieldValue } from '../core/types';
 
 type Elements = HTMLInputElement | HTMLSelectElement;
 
 export function useFieldActions(Form: FormObject, fieldId: string) {
   const dispatch = Form.dispatch;
-  const { stageId, isRequired } = Form.getField(fieldId);
+  const { stageId, validate } = Form.getField(fieldId);
 
-  const validate = useCallback(
-    (value: FieldValue) => {
-      const debouncedValidate = debounce(() => {
-        if (!value && isRequired) {
-          // dispatch('setFieldValid', { isValid: false });
-          console.log('INVALID');
-        } else {
-          // dispatch('setFieldValid', { isValid: true });
-          console.log('VALID');
-        }
-      }, 400);
-
-      debouncedValidate();
-    },
-    [isRequired]
-  );
+  const debouncedValidation = useMemo(() => {
+    return debounce(validate, 800);
+  }, [validate]);
 
   const handleChange = useCallback(
     (e: React.ChangeEvent<Elements>) => {
-      dispatch(
-        'SET_FIELD_VALUE',
-        {
-          fieldId,
-          stageId,
-          value: e.target.value,
-        },
-        [stageId, fieldId]
-      );
-      validate(e.target.value);
+      dispatch('SET_FIELD_VALUE', {
+        value: e.target.value,
+        path: [stageId, fieldId],
+      });
+
+      debouncedValidation(e.target.value);
     },
-    [dispatch, validate, stageId, fieldId]
+    [dispatch, debouncedValidation, stageId, fieldId]
   );
 
   return handleChange;

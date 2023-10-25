@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { ActionPayload, ActionKey } from './actions';
 import { FieldValue } from './State';
+import FormStateManager, { FieldState } from './StateManager';
 import { FieldSideEffects } from './types';
-// import { FieldState } from './StateManager';
 
 class FieldObject {
   id: string;
@@ -10,17 +11,58 @@ class FieldObject {
   initialValue: FieldValue;
   value: FieldValue;
   sideEffects?: FieldSideEffects<Record<string, any>>;
-  // stageId: string;
-  // currentState: FieldState;
 
-  constructor(id: string, stageId: string, data: Record<string, any>) {
+  stateManager: FormStateManager;
+  currentState: FieldState;
+  validateStage: () => void;
+
+  constructor(
+    id: string,
+    stageId: string,
+    data: Record<string, any>,
+    fieldStateManager: FormStateManager,
+    private dispatch: (
+      action: ActionKey,
+      payload: ActionPayload<ActionKey>
+    ) => void,
+    validateStage: () => void
+  ) {
     this.id = id;
     this.stageId = stageId;
     this.isRequired = data.isRequired;
     this.initialValue = data.initialValue;
     this.value = data.initialValue;
     this.sideEffects = data.sideEffects;
-    // this.currentState = FieldState.INVALID;
+
+    this.currentState = data.initialValue
+      ? FieldState.VALID
+      : data.isRequired
+      ? FieldState.INVALID
+      : FieldState.VALID;
+
+    this.stateManager = fieldStateManager;
+
+    this.validateStage = validateStage;
+    this.validate = this.validate.bind(this);
+  }
+
+  validate(value: FieldValue) {
+    this.goToState(FieldState.VALIDATING);
+    if (!value && this.isRequired) {
+      this.goToState(FieldState.INVALID);
+    } else {
+      this.goToState(FieldState.VALID);
+    }
+  }
+
+  private goToState(state: FieldState) {
+    if (this.stateManager.canTransitionTo(this.currentState, state)) {
+      this.dispatch('SET_FIELD_STATE', {
+        value: state,
+        path: [this.stageId, this.id],
+      });
+    }
+    this.validateStage(); // trigger stage validation
   }
 }
 

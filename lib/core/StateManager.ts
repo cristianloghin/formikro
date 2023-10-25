@@ -10,10 +10,15 @@ export enum FormState {
   NOT_SUBMITTABLE = 'NOT_SUBMITTABLE',
 }
 
+export enum StageState {
+  INCOMPLETE = 'INCOMPLETE',
+  COMPLETE = 'COMPLETE',
+}
+
 export enum FieldState {
+  VALIDATING = 'VALIDATING',
   VALID = 'VALID',
   INVALID = 'INVALID',
-  DISABLED = 'DISABLED',
 }
 
 interface State {
@@ -21,58 +26,35 @@ interface State {
 }
 
 class NodeState implements State {
-  private nodeType: NodeType;
   private stateTransitions: Map<string, string[]> = new Map();
 
-  constructor(nodeType: NodeType, stages?: string[]) {
-    this.nodeType = nodeType;
-
-    switch (this.nodeType) {
+  constructor(nodeType: NodeType) {
+    switch (nodeType) {
       case 'FORM':
-        this.stateTransitions.set(FormState.SUBMITTABLE, [
-          FormState.NOT_SUBMITTABLE,
-        ]);
         this.stateTransitions.set(FormState.NOT_SUBMITTABLE, [
           FormState.SUBMITTABLE,
         ]);
-        break;
-      case 'FIELD':
-        this.stateTransitions.set(FieldState.VALID, [
-          FieldState.INVALID,
-          FieldState.DISABLED,
-        ]);
-        this.stateTransitions.set(FieldState.INVALID, [
-          FieldState.VALID,
-          FieldState.DISABLED,
-        ]);
-        this.stateTransitions.set(FieldState.DISABLED, [
-          FieldState.VALID,
-          FieldState.INVALID,
+        this.stateTransitions.set(FormState.SUBMITTABLE, [
+          FormState.NOT_SUBMITTABLE,
         ]);
         break;
       case 'STAGE':
-        if (stages) {
-          stages.forEach((stage, index) => {
-            const nextState =
-              index < stages.length
-                ? `${stages[index + 1]}_INVALID`
-                : undefined;
-
-            const currentState = {
-              invalid: `${stage.toUpperCase()}_INVALID`,
-              valid: `${stage.toUpperCase()}_VALID`,
-            };
-            this.stateTransitions.set(currentState.invalid, [
-              currentState.valid,
-            ]);
-            this.stateTransitions.set(
-              currentState.valid,
-              nextState
-                ? [currentState.invalid, nextState]
-                : [currentState.invalid]
-            );
-          });
-        }
+        this.stateTransitions.set(StageState.INCOMPLETE, [StageState.COMPLETE]);
+        this.stateTransitions.set(StageState.COMPLETE, [StageState.INCOMPLETE]);
+        break;
+      case 'FIELD':
+        this.stateTransitions.set(FieldState.VALIDATING, [
+          FieldState.INVALID,
+          FieldState.VALID,
+        ]);
+        this.stateTransitions.set(FieldState.VALID, [
+          FieldState.VALIDATING,
+          FieldState.INVALID,
+        ]);
+        this.stateTransitions.set(FieldState.INVALID, [
+          FieldState.VALIDATING,
+          FieldState.VALID,
+        ]);
         break;
     }
   }
@@ -83,62 +65,21 @@ class NodeState implements State {
   }
 }
 
-interface StateManager {
-  canTransitionTo(
-    formId: string,
-    currentStage: string,
-    nextStage: string
-  ): boolean;
-  // transitionTo(
-  //   formId: string,
-  //   currentStage: string,
-  //   nextStage: string
-  // ): boolean;
-}
+class FormStateManager {
+  private stateInstance: State;
 
-class FormStateManager implements StateManager {
-  private stateInstances: Map<NodeType, State> = new Map();
-
-  constructor(stages: string[]) {
-    this.stateInstances.set('FORM', new NodeState('FORM'));
-    this.stateInstances.set('FIELD', new NodeState('FIELD'));
-    this.stateInstances.set('STAGE', new NodeState('STAGE', stages));
+  constructor(node: NodeType) {
+    this.stateInstance = new NodeState(node);
   }
 
-  canTransitionTo(
-    nodeType: NodeType,
-    currentState: string,
-    nextState: string
-  ): boolean {
-    const stateInstance = this.stateInstances.get(nodeType);
-
-    if (
-      stateInstance &&
-      stateInstance.canChangeState(currentState, nextState)
-    ) {
+  canTransitionTo(currentState: string, nextState: string): boolean {
+    const stateInstance = this.stateInstance;
+    if (stateInstance.canChangeState(currentState, nextState)) {
       return true;
     }
 
     return false;
   }
-
-  // transitionTo(
-  //   formId: string,
-  //   currentStage: string,
-  //   nextStage: string
-  // ): boolean {
-  //   const formTransitions = this.stateTransitions.get(formId);
-
-  //   if (formTransitions) {
-  //     if (this.canTransitionTo(formId, currentStage, nextStage)) {
-  //       const transition = formTransitions.get(nextStage);
-  //       transition?.changeState();
-  //       return true;
-  //     }
-  //   }
-
-  //   return false;
-  // }
 }
 
 export default FormStateManager;

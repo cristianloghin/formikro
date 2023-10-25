@@ -21,16 +21,24 @@ class FormEventBus {
     }
   }
 
-  publish(state: FormState, action: string, path: string[] | undefined) {
-    if (path) {
-      const target = `${action}:${path.join(':')}`;
-      const targetObservers = this.observers.get(target);
+  publish(
+    state: FormState,
+    action: string,
+    path: string | [string, string] | undefined
+  ) {
+    let targetObservers: Map<string, FormObserver> | undefined;
 
-      if (targetObservers) {
-        targetObservers.forEach((callback) => {
-          callback(state);
-        });
-      }
+    if (path) {
+      const target = `${action}:${Array.isArray(path) ? path.join(':') : path}`;
+      targetObservers = this.observers.get(target);
+    } else {
+      targetObservers = this.observers.get(action);
+    }
+
+    if (targetObservers) {
+      targetObservers.forEach((callback) => {
+        callback(state);
+      });
     }
   }
 }
