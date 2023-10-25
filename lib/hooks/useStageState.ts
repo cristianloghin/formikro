@@ -1,9 +1,9 @@
 import { useRef, useState, useEffect, useCallback } from 'react';
-import FormObject from '../core/FormObject';
+import Form from '../core/Form';
 import { FormObserver } from '../core/types';
 import { StageState } from '../core/StateManager';
 
-export function useStageState(Form: FormObject, stageId: string) {
+export function useStageState(Form: Form, stageId: string) {
   const uid = useRef(Math.random().toString(36).substring(2, 8));
   const Stage = Form.getStage(stageId);
   const [state, setState] = useState<StageState>(Stage.currentState);

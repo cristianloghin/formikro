@@ -1,4 +1,4 @@
-import FormObject from '../core/FormObject';
+import Form from '../core/Form';
 import { StageState } from '../core/StateManager';
 import { useStageState } from '../hooks';
 
@@ -7,10 +7,7 @@ export interface StageProps<T> {
   children: React.ReactNode;
 }
 
-export function Stage<T extends string>(
-  Form: FormObject,
-  props: StageProps<T>
-) {
+export function Stage<T extends string>(Form: Form, props: StageProps<T>) {
   const { name, children } = props;
   const state = useStageState(Form, name);
 

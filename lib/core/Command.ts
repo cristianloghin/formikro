@@ -1,5 +1,5 @@
 import FormWorker from './Worker';
-import { ActionKey, ActionPayload } from './actions';
+import { ActionKey, ActionPayload } from './Actions';
 import { FormState } from './types';
 
 export interface Command {

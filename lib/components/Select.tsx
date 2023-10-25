@@ -1,4 +1,4 @@
-import FormObject from '../core/FormObject';
+import Form from '../core/Form';
 import { FieldProps } from '../core/types';
 import { useFieldValue, useFieldActions } from '../hooks';
 
@@ -6,10 +6,7 @@ export interface SelectProps<T> extends FieldProps<T> {
   options: [label: string, value: string][];
 }
 
-export function Select<T>(
-  Form: FormObject,
-  { id, label, options }: SelectProps<T>
-) {
+export function Select<T>(Form: Form, { id, label, options }: SelectProps<T>) {
   const { value: selectedValue, isRequired } = useFieldValue(Form, id);
   const handleChange = useFieldActions(Form, id);
 

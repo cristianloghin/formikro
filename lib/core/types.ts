@@ -1,4 +1,4 @@
-import StageObject from './StageObject';
+import Stage from './Stage';
 import { FormState as FormStateType } from './StateManager';
 
 export type FieldValue = string | number | undefined;
@@ -26,7 +26,7 @@ export type DynamicFields<T> = {
 
 export type FormState = {
   currentState: FormStateType;
-  stages: Map<string, StageObject>;
+  stages: Map<string, Stage>;
 };
 
 export type FormObserver = (state: FormState) => void;

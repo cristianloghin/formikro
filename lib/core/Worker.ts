@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { FormState } from './types';
-import formActions, { ActionKey, ActionPayload } from './actions';
+import formActions, { ActionKey, ActionPayload } from './Actions';
 
 class FormWorker {
   mutateState(

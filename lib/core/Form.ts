@@ -1,17 +1,17 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { FormObserver, FormState } from './types';
-import StageObject from './StageObject';
-import FieldObject from './FieldObject';
+import Stage from './Stage';
+import Field from './Field';
 import FormCommand from './Command';
 import FormWorker from './Worker';
-import { ActionPayload, ActionKey } from './actions';
+import { ActionPayload, ActionKey } from './Actions';
 import FormEventBus from './EventBus';
 import FormStateManager, {
   FormState as FormStateType,
   StageState,
 } from './StateManager';
 
-class FormObject {
+class Form {
   private worker = new FormWorker();
   private eventBus = new FormEventBus();
 
@@ -21,7 +21,7 @@ class FormObject {
   fieldStateManager: FormStateManager;
   state: FormState = {
     currentState: FormStateType.NOT_SUBMITTABLE,
-    stages: new Map<string, StageObject>(),
+    stages: new Map<string, Stage>(),
   };
 
   constructor(id: string, data: Record<string, Record<string, any>>) {
@@ -37,7 +37,7 @@ class FormObject {
     Object.entries(data).forEach(([stage, fields]) => {
       this.state.stages.set(
         stage,
-        new StageObject(
+        new Stage(
           stage,
           fields,
           this.stageStateManager,
@@ -49,20 +49,20 @@ class FormObject {
     });
   }
 
-  getField(fieldId: string): FieldObject {
+  getField(fieldId: string): Field {
     let Field;
     this.state.stages.forEach((stage) => {
       if (stage.fields.has(fieldId)) {
         Field = stage.fields.get(fieldId);
       }
     });
-    return Field as unknown as FieldObject;
+    return Field as unknown as Field;
   }
 
-  getStage(stageId: string): StageObject {
+  getStage(stageId: string): Stage {
     const Stage = this.state.stages.get(stageId);
 
-    return Stage as unknown as StageObject;
+    return Stage as unknown as Stage;
   }
 
   validate() {
@@ -110,4 +110,4 @@ class FormObject {
   }
 }
 
-export default FormObject;
+export default Form;

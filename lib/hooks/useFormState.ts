@@ -1,8 +1,8 @@
 import { useRef, useState, useEffect, useCallback } from 'react';
-import FormObject from '../core/FormObject';
+import Form from '../core/Form';
 import { FormObserver } from '../core/types';
 
-export function useFormState(Form: FormObject) {
+export function useFormState(Form: Form) {
   const uid = useRef(Math.random().toString(36).substring(2, 8));
   const [isSubmittable, setIsSubmittable] = useState(
     Form.state.currentState === 'SUBMITTABLE'

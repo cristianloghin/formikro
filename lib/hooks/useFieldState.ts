@@ -1,9 +1,9 @@
 import { useRef, useState, useEffect, useCallback } from 'react';
-import FormObject from '../core/FormObject';
+import Form from '../core/Form';
 import { FormObserver } from '../core/types';
 import { FieldState } from '../core/StateManager';
 
-export function useFieldState(Form: FormObject, fieldId: string) {
+export function useFieldState(Form: Form, fieldId: string) {
   const uid = useRef(Math.random().toString(36).substring(2, 8));
   const Field = Form.getField(fieldId);
   const [state, setState] = useState<FieldState>(Field.currentState);

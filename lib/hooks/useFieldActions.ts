@@ -1,9 +1,9 @@
 import { useCallback, useMemo } from 'react';
-import FormObject from '../core/FormObject';
+import Form from '../core/Form';
 
 type Elements = HTMLInputElement | HTMLSelectElement;
 
-export function useFieldActions(Form: FormObject, fieldId: string) {
+export function useFieldActions(Form: Form, fieldId: string) {
   const dispatch = Form.dispatch;
   const { stageId, validate } = Form.getField(fieldId);
 

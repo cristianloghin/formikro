@@ -1,10 +1,10 @@
 import { FieldProps } from '../core/types';
 import { useFieldValue, useFieldActions, useFieldState } from '../hooks';
-import FormObject from '../core/FormObject';
+import Form from '../core/Form';
 
 export interface InputProps<T> extends FieldProps<T> {}
 
-export function Input<T>(Form: FormObject, { id, label }: FieldProps<T>) {
+export function Input<T>(Form: Form, { id, label }: FieldProps<T>) {
   const { value, isRequired } = useFieldValue(Form, id);
   const state = useFieldState(Form, id);
   const handleInput = useFieldActions(Form, id);

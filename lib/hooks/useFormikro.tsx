@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 // Cor3
-import Formikro from '../core/State';
+import Global from '../core/Global';
 import { FieldValue, DynamicFields } from '../core/types';
 // Fi3lds
 import { Input, InputProps } from '../components/Input';
@@ -29,7 +29,7 @@ export function useFormikro<
   T extends Record<string, FieldValue>,
   K extends string = 'DEFAULT'
 >(formId: string, options: FormOptions<T, K>) {
-  const Form = Formikro.initialize<T>(
+  const Form = Global.initialize<T>(
     formId,
     options.multiStage
       ? options.data

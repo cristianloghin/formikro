@@ -121,7 +121,7 @@ export function Playground() {
             style={{
               display: 'grid',
               width: '100%',
-              gridAutoFlow: 'column',
+              gridTemplateColumns: 'repeat(2, 1fr)',
               gap: '.66rem',
             }}
           >
@@ -140,7 +140,7 @@ export function Playground() {
             style={{
               display: 'grid',
               width: '100%',
-              gridAutoFlow: 'column',
+              gridTemplateColumns: 'repeat(4, 1fr)',
               gap: '.66rem',
             }}
           >

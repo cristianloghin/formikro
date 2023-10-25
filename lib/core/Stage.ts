@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { ActionPayload, ActionKey } from './actions';
-import FieldObject from './FieldObject';
+import { ActionPayload, ActionKey } from './Actions';
+import Field from './Field';
 import FormStateManager, { FieldState, StageState } from './StateManager';
 
-class StageObject {
+class Stage {
   id: string;
   currentState: StageState;
-  fields = new Map<string, FieldObject>();
+  fields = new Map<string, Field>();
   stateManager: FormStateManager;
   validateForm: () => void;
 
@@ -29,7 +29,7 @@ class StageObject {
     Object.entries(fields).forEach(([fieldName, field]) => {
       this.fields.set(
         fieldName,
-        new FieldObject(
+        new Field(
           fieldName,
           id,
           field,
@@ -73,4 +73,4 @@ class StageObject {
   }
 }
 
-export default StageObject;
+export default Stage;

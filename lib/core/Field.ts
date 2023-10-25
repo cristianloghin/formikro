@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { ActionPayload, ActionKey } from './actions';
-import { FieldValue } from './State';
+import { ActionPayload, ActionKey } from './Actions';
+import { FieldValue } from './Global';
 import FormStateManager, { FieldState } from './StateManager';
 import { FieldSideEffects } from './types';
 
-class FieldObject {
+class Field {
   id: string;
   stageId: string;
   isRequired: boolean;
@@ -66,4 +66,4 @@ class FieldObject {
   }
 }
 
-export default FieldObject;
+export default Field;
