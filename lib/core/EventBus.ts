@@ -1,4 +1,4 @@
-import { FormObserver, FormState } from './types';
+import { FormObserver, FormData } from './types';
 
 // A centralized EventBus that both mutates state and notifies observers
 
@@ -9,8 +9,9 @@ class FormEventBus {
     if (!this.observers.has(action)) {
       const observerMap = new Map<string, FormObserver>();
       observerMap.set(uid, observer);
-
       this.observers.set(action, observerMap);
+    } else {
+      this.observers.get(action)?.set(uid, observer);
     }
   }
 
@@ -22,7 +23,7 @@ class FormEventBus {
   }
 
   publish(
-    state: FormState,
+    data: FormData,
     action: string,
     path: string | [string, string] | undefined
   ) {
@@ -37,7 +38,7 @@ class FormEventBus {
 
     if (targetObservers) {
       targetObservers.forEach((callback) => {
-        callback(state);
+        callback(data);
       });
     }
   }

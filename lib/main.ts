@@ -1,1 +1,2 @@
-export { useFormikro } from './hooks/useFormikro';
+export { useFormikro } from './hooks';
+export { useFormikroClient } from './hooks';

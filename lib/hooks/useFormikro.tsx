@@ -1,12 +1,9 @@
 import { useCallback } from 'react';
-// Cor3
 import Global from '../core/Global';
 import { FieldValue, DynamicFields } from '../core/types';
-// Fi3lds
 import { Input, InputProps } from '../components/Input';
 import { Select, SelectProps } from '../components/Select';
 import { Stage, StageProps } from '../components/Stage';
-import { useFormState } from '.';
 
 export type FormOptions<T, K extends string> = K extends 'DEFAULT'
   ? {
@@ -36,8 +33,6 @@ export function useFormikro<
       : { DEFAULT: options.data as DynamicFields<T> }
   );
 
-  const isSubmittable = useFormState(Form);
-
   const DynamicForm = useCallback<React.FC<React.PropsWithChildren>>(
     ({ children }) => {
       return (
@@ -57,5 +52,5 @@ export function useFormikro<
   ComposedForm.Stage = useCallback((props) => Stage(Form, props), [Form]);
   ComposedForm.Select = useCallback((props) => Select(Form, props), [Form]);
 
-  return { ComposedForm, isSubmittable };
+  return ComposedForm;
 }

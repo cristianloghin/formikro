@@ -1,6 +1,6 @@
 import FormWorker from './Worker';
 import { ActionKey, ActionPayload } from './Actions';
-import { FormState } from './types';
+import { FormData } from './types';
 
 export interface Command {
   execute(): void;
@@ -11,17 +11,17 @@ class FormCommand implements Command {
     private worker: FormWorker,
     private action: ActionKey,
     private payload: ActionPayload<ActionKey>,
-    private state: FormState
+    private data: FormData
   ) {}
 
   execute() {
     const newForm = this.worker.mutateState(
       this.action,
       this.payload,
-      this.state
+      this.data
     );
 
-    // Use the worker to mutate the state and return it
+    // Use the worker to mutate the data and return it
     return newForm;
   }
 }

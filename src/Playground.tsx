@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useFormikro } from '../lib/main';
+import { useFormikro, useFormikroClient } from '../lib/main';
 
 type FooForm = {
   pants: string;
@@ -56,10 +56,7 @@ export function Playground() {
     fetchColors();
   }, []);
 
-  const { ComposedForm: FooForm, isSubmittable: fooSubmittable } = useFormikro<
-    FooForm,
-    StagesFoo
-  >('FooForm', {
+  const FooForm = useFormikro<FooForm, StagesFoo>('FooForm', {
     onSubmit: saveFoo,
     multiStage: true,
     data: {
@@ -87,28 +84,38 @@ export function Playground() {
     },
   });
 
-  const { ComposedForm: BarForm, isSubmittable: barSubmittable } =
-    useFormikro<BarForm>('BarForm', {
-      onSubmit: saveBar,
-      data: {
-        trousers: {
-          isRequired: true,
-          initialValue: 'Pantaloons',
-        },
-        maker: {
-          isRequired: false,
-          initialValue: 'Joes',
-        },
-        dimensions: {
-          isRequired: true,
-          initialValue: 30,
-        },
-        shade: {
-          isRequired: false,
-          initialValue: 'red',
-        },
+  const BarForm = useFormikro<BarForm>('BarForm', {
+    onSubmit: saveBar,
+    data: {
+      trousers: {
+        isRequired: true,
+        initialValue: 'Pantaloons',
       },
-    });
+      maker: {
+        isRequired: false,
+        initialValue: 'Joes',
+      },
+      dimensions: {
+        isRequired: true,
+        initialValue: 30,
+      },
+      shade: {
+        isRequired: false,
+        initialValue: 'red',
+      },
+    },
+  });
+
+  const {
+    isSubmittable: barSubmittable,
+    stages: barStages,
+    controller: barController,
+  } = useFormikroClient('BarForm');
+  const {
+    isSubmittable: fooSubmittable,
+    stages: fooStages,
+    controller: fooController,
+  } = useFormikroClient('FooForm');
 
   return (
     <>
@@ -117,6 +124,10 @@ export function Playground() {
         style={{ display: 'grid', gap: '1rem', gridTemplateColumns: '1fr 2fr' }}
       >
         <div>
+          <h2>Bar Form</h2>
+          <p>
+            Stage: {barStages.active} {barStages.activeState}
+          </p>
           <div
             style={{
               display: 'grid',
@@ -126,7 +137,9 @@ export function Playground() {
             }}
           >
             <button disabled>Reset</button>
-            <button disabled={!barSubmittable}>Submit</button>
+            <button onClick={barController.submit} disabled={!barSubmittable}>
+              Submit
+            </button>
           </div>
           <BarForm>
             <BarForm.Input id='trousers' label='Trousers' />
@@ -136,6 +149,10 @@ export function Playground() {
           </BarForm>
         </div>
         <div>
+          <h2>Foo Form</h2>
+          <p>
+            Stage: {fooStages.active} {fooStages.activeState}
+          </p>
           <div
             style={{
               display: 'grid',
@@ -145,9 +162,21 @@ export function Playground() {
             }}
           >
             <button disabled>Reset</button>
-            <button disabled>Previous</button>
-            <button disabled>Next</button>
-            <button disabled={!fooSubmittable}>Submit</button>
+            <button
+              onClick={fooController.previousStage}
+              disabled={!fooStages.previous}
+            >
+              Previous
+            </button>
+            <button
+              onClick={fooController.nextStage}
+              disabled={!fooStages.next}
+            >
+              Next
+            </button>
+            <button onClick={fooController.submit} disabled={!fooSubmittable}>
+              Submit
+            </button>
           </div>
           <FooForm>
             <FooForm.Stage name='FOO'>

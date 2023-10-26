@@ -1,6 +1,7 @@
 import Form from '../core/Form';
 import { StageState } from '../core/StateManager';
 import { useStageState } from '../hooks';
+import { useFormStages } from '../hooks';
 
 export interface StageProps<T> {
   name: T;
@@ -10,6 +11,7 @@ export interface StageProps<T> {
 export function Stage<T extends string>(Form: Form, props: StageProps<T>) {
   const { name, children } = props;
   const state = useStageState(Form, name);
+  const stages = useFormStages(Form);
 
   return (
     <fieldset
@@ -20,6 +22,7 @@ export function Stage<T extends string>(Form: Form, props: StageProps<T>) {
         borderWidth: 1,
         borderStyle: 'solid',
         borderColor: state === StageState.COMPLETE ? 'green' : 'red',
+        backgroundColor: stages.active === name ? 'white' : '#EEE',
       }}
     >
       {children}

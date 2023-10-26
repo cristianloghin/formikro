@@ -13,7 +13,7 @@ export function useStageState(Form: Form, stageId: string) {
     setState(Stage.currentState);
   }, [Stage]);
 
-  // subscribe to value change
+  // subscribe to state change
   useEffect(() => {
     const observerId = uid.current;
     const action = `SET_STAGE_STATE:${Stage.id}`;

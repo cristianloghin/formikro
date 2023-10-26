@@ -5,12 +5,12 @@ import { FormObserver } from '../core/types';
 export function useFormState(Form: Form) {
   const uid = useRef(Math.random().toString(36).substring(2, 8));
   const [isSubmittable, setIsSubmittable] = useState(
-    Form.state.currentState === 'SUBMITTABLE'
+    Form.data.currentState === 'SUBMITTABLE'
   );
 
   // set up an observer
   const formObserver = useCallback<FormObserver>(() => {
-    setIsSubmittable(Form.state.currentState === 'SUBMITTABLE');
+    setIsSubmittable(Form.data.currentState === 'SUBMITTABLE');
   }, [Form]);
 
   // subscribe to value change

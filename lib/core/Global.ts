@@ -24,6 +24,16 @@ class Global {
 
     return form;
   }
+
+  getForm(formName: string): Form {
+    const Form = this.forms.get(formName);
+
+    if (!Form) {
+      throw `${formName} does not exist.`;
+    }
+
+    return Form;
+  }
 }
 
 const instance = Global.getInstance();
