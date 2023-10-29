@@ -1,12 +1,19 @@
-import { FormDispatch } from './Form';
+import { ActionKey, ActionPayload } from './Actions';
 
-export class StageManager {
+/* eslint-disable @typescript-eslint/no-explicit-any */
+class StageManager {
   private transitions = new Map<
     string,
     { next: string | undefined; previous: string | undefined }
   >();
 
-  constructor(stages: string[], private dispatch: FormDispatch) {
+  constructor(
+    stages: string[],
+    private dispatch: (
+      action: ActionKey,
+      payload: ActionPayload<ActionKey>
+    ) => any
+  ) {
     if (stages.length === 1) {
       this.transitions.set(stages[0], { next: undefined, previous: undefined });
     } else {
@@ -39,7 +46,7 @@ export class StageManager {
   goToNextStage(current: string) {
     if (this.hasNextStage(current)) {
       const nextStage = this.transitions.get(current)!.next as string;
-      this.dispatch('SET_ACTIVE_STAGE', { current, active: nextStage });
+      this.dispatch('SET_ACTIVE_STAGE', { value: nextStage, path: undefined });
     }
   }
 
@@ -47,25 +54,27 @@ export class StageManager {
     if (this.hasPreviousStage(current)) {
       const previousStage = this.transitions.get(current)!.previous as string;
       this.dispatch('SET_ACTIVE_STAGE', {
-        current,
-        active: previousStage,
+        value: previousStage,
+        path: undefined,
       });
     }
   }
 
-  // getPrevious(current: string): string | undefined {
-  //   if (this.hasPreviousStage(current)) {
-  //     return this.transitions.get(current)?.previous;
-  //   } else {
-  //     return undefined;
-  //   }
-  // }
+  getPrevious(current: string): string | undefined {
+    if (this.hasPreviousStage(current)) {
+      return this.transitions.get(current)?.previous;
+    } else {
+      return undefined;
+    }
+  }
 
-  // getNext(current: string): string | undefined {
-  //   if (this.hasNextStage(current)) {
-  //     return this.transitions.get(current)?.next;
-  //   } else {
-  //     return undefined;
-  //   }
-  // }
+  getNext(current: string): string | undefined {
+    if (this.hasNextStage(current)) {
+      return this.transitions.get(current)?.next;
+    } else {
+      return undefined;
+    }
+  }
 }
+
+export default StageManager;

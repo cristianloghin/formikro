@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Field, FieldValue } from './Field';
 import { Form, FormType } from './Form';
-import { FieldState, FormState } from './StateManager';
+import { Stage } from './Stage';
+import { FieldState, FormState, StageState } from './StateManager';
 
 export type ActionKey = keyof typeof formActions;
 export type ActionPayload<T extends ActionKey> = Parameters<
@@ -11,6 +12,7 @@ export type ActionPayload<T extends ActionKey> = Parameters<
 export type ActionData = {
   currentState: FormState;
   fields: Map<string, Field>;
+  stages?: Map<string, Stage>;
 };
 
 const formActions = {
@@ -34,29 +36,34 @@ const formActions = {
 
       return data;
     },
-  // SET_STAGE_STATE:
-  //   ({ value, path }: { value: StageState; path: string }) =>
-  //   (data: FormData) => {
-  //     const Stage = data.stages.get(path);
-  //     if (Stage) {
-  //       Stage.currentState = value;
-  //     }
-  //     return data;
-  //   },
+  SET_STAGE_STATE:
+    ({ id, state }: { id: string; state: StageState }) =>
+    (data: ActionData) => {
+      const stage = data.stages?.get(id);
+      if (stage) {
+        stage.currentState = state;
+      }
+      return data;
+    },
   SET_FORM_STATE:
     ({ state }: { state: FormState }) =>
     (data: ActionData) => {
       data.currentState = state;
       return data;
     },
-  // SET_ACTIVE_STAGE:
-  //   ({ value }: { value: string; path: undefined }) =>
-  //   (data: FormData) => {
-  //     const stageState = data.stages.get(value)!.currentState;
-  //     data.currentStage = [value, stageState];
+  SET_ACTIVE_STAGE:
+    ({ current, active }: { current: string; active: string }) =>
+    (data: ActionData) => {
+      const currentStage = data.stages?.get(current);
+      const activeStage = data.stages?.get(active);
 
-  //     return data;
-  //   },
+      if (currentStage && activeStage) {
+        currentStage.isActive = false;
+        activeStage.isActive = true;
+      }
+
+      return data;
+    },
   SET_FORM: (payload: Partial<Form>) => (form: FormType) => {
     console.log(payload, form);
   },

@@ -44,7 +44,12 @@ abstract class AbstractField implements FieldType {
     this.uid = Math.random().toString(36).substring(2, 8);
     this.isRequired = isRequired;
     this.initialValue = initialValue;
-    this.currentState = initialValue ? FieldState.VALID : FieldState.INVALID;
+    this.value = initialValue;
+    this.currentState = isRequired
+      ? initialValue
+        ? FieldState.VALID
+        : FieldState.INVALID
+      : FieldState.VALID;
 
     this.validate = this.validate.bind(this);
   }
@@ -137,7 +142,6 @@ export class StageField extends AbstractField implements StageableField {
         this.uid
       );
     }
-    // this.validateStage();
     this.validateForm();
   }
 }

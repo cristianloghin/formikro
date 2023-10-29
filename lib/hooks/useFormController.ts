@@ -1,19 +1,18 @@
 import { useCallback } from 'react';
-import Client from '../core/__Client';
+import { Client } from '../core/Client';
 
-export function useFormController(Client: Client) {
+export function useFormController(client: Client) {
   const submit = useCallback(() => {
-    console.log('Submit', Client.getFormId());
-  }, [Client]);
+    console.log('Submit', client.formId);
+  }, [client]);
 
   const nextStage = useCallback(() => {
-    Client.goToNextStage();
-  }, [Client]);
+    client.goToStage('next');
+  }, [client]);
 
   const previousStage = useCallback(() => {
-    () => console.log('Go to previous stage', Client.getFormId());
-    Client.goToPreviousStage();
-  }, [Client]);
+    client.goToStage('previous');
+  }, [client]);
 
   return {
     submit,

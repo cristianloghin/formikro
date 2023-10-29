@@ -8,7 +8,7 @@ export { useStage } from './useStage';
 
 // Form hooks
 export { useFormState } from './useFormState';
-export { useFormStages } from './useFormStages';
+export { useFormStage } from './useFormStage';
 export { useFormController } from './useFormController';
 
 export { useFormikro } from './useFormikro';

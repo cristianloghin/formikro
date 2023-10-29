@@ -1,34 +1,34 @@
-import { useRef, useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Client } from '../core/Client';
-import { FormObserver } from '../core/types';
-import { StageState } from '../core/__StateManager';
+import { StageState } from '../core/StateManager';
 
-export function useStage(clientInstance: Client, stageId: string) {
-  const uid = useRef(Math.random().toString(36).substring(2, 8));
-  const Stage = clientInstance.getStage(stageId);
-  const [isActive, setIsActive] = useState(Stage?.isActive);
+export function useStage(client: Client, stageId: string) {
+  const stage = client.getStage(stageId);
+  const uid = stage?.uid;
+  const [isActive, setIsActive] = useState(stage?.isActive);
   const [isComplete, setIsComplete] = useState(
-    Stage?.currentState === StageState.COMPLETE
+    stage?.currentState === StageState.COMPLETE
   );
 
   // set up an observer
-  const stageObserver = useCallback<FormObserver>(() => {
-    setIsComplete(Stage?.currentState === StageState.COMPLETE);
-    setIsActive(Stage?.isActive);
-  }, [Stage]);
+  const stageObserver = useCallback(() => {
+    setIsComplete(stage?.currentState === StageState.COMPLETE);
+    setIsActive(stage?.isActive);
+  }, [stage]);
 
   // subscribe to state change
   useEffect(() => {
-    const observerId = uid.current;
-    const action = `SET_STAGE_STATE:${Stage?.id}`;
-    clientInstance.subscribe(action, stageObserver, observerId);
+    client.subscribe('SET_STAGE_STATE', stageObserver, uid!);
+    client.subscribe('SET_ACTIVE_STAGE', stageObserver, uid!);
 
-    return () => clientInstance.unsubscribe(action, observerId);
-  }, [clientInstance, Stage, stageObserver]);
+    return () => {
+      client.unsubscribe('SET_STAGE_STATE', uid!);
+      client.unsubscribe('SET_ACTIVE_STAGE', uid!);
+    };
+  }, [client, stage, stageObserver, uid]);
 
   return {
     isComplete,
     isActive,
-    formId: Stage?.formId,
   };
 }

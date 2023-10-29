@@ -3,6 +3,7 @@ import { Field } from './Field';
 import { Stage } from './Stage';
 import { FormObserver } from './EventBus';
 import { ActionKey, ActionPayload } from './Actions';
+import { StageState } from './StateManager';
 
 export class Client {
   constructor(private formType: FormType & Partial<Stageable>) {}
@@ -14,6 +15,38 @@ export class Client {
   getStage(id: string): Stage | null {
     if ('getStage' in this.formType) {
       return this.formType.getStage!(id);
+    } else {
+      return null;
+    }
+  }
+
+  get activeStageState(): StageState | null {
+    if ('currentStage' in this.formType) {
+      return this.formType.currentStage!.currentState;
+    } else {
+      return null;
+    }
+  }
+
+  get activeStageIndex(): number | null {
+    if ('currentStage' in this.formType) {
+      return this.formType.currentStage!.index;
+    } else {
+      return null;
+    }
+  }
+
+  get totalStages(): number | null {
+    if ('stages' in this.formType) {
+      return this.formType.stages!.size;
+    } else {
+      return null;
+    }
+  }
+
+  goToStage(target: 'previous' | 'next') {
+    if ('goToStage' in this.formType) {
+      this.formType.goToStage!(target);
     } else {
       return null;
     }

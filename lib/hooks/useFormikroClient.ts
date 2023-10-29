@@ -1,22 +1,20 @@
 import Global from '../core/Global';
-import { useFormState } from '.';
-// import { useFormStages, useFormController } from '.';
+import { useFormState, useFormController, useFormStage } from '.';
 
 function useFormikroClient(formName: string) {
   const form = Global.getForm(formName);
   const client = form.getClient();
 
   const { isSubmittable } = useFormState(client);
+  const stage = useFormStage(client);
 
-  // const stages = useFormStages(form);
-
-  // const controller = useFormController(client);
+  const controller = useFormController(client);
 
   // const { isSubmittable } = useForm(client);
 
   // return { isSubmittable, stages, controller };
 
-  return { isSubmittable };
+  return { isSubmittable, stage, controller };
 }
 
 export { useFormikroClient };

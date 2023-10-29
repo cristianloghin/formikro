@@ -103,14 +103,13 @@ export function Playground() {
 
   const {
     isSubmittable: barSubmittable,
-    // stages: barStages,
     // controller: barController,
   } = useFormikroClient('BarForm');
-  // const {
-  //   isSubmittable: fooSubmittable,
-  //   stages: fooStages,
-  //   controller: fooController,
-  // } = useFormikroClient('FooForm');
+  const {
+    isSubmittable: fooSubmittable,
+    stage,
+    controller: fooController,
+  } = useFormikroClient('FooForm');
 
   return (
     <>
@@ -139,11 +138,11 @@ export function Playground() {
             <button disabled={!barSubmittable}>Submit</button>
           </div>
         </div>
-        {/* <div>
+        <div>
           <h2>Foo Form</h2>
-          <p>
+          {/* <p>
             Stage: {fooStages.active} {fooStages.activeState}
-          </p>
+          </p> */}
           <div
             style={{
               display: 'grid',
@@ -155,17 +154,20 @@ export function Playground() {
             <button disabled>Reset</button>
             <button
               onClick={fooController.previousStage}
-              disabled={!fooStages.previous}
+              disabled={!stage.canGoToPrevious}
             >
               Previous
             </button>
             <button
               onClick={fooController.nextStage}
-              disabled={!fooStages.next}
+              disabled={!stage.canGoToNext}
             >
               Next
             </button>
-            <button onClick={fooController.submit} disabled={!fooSubmittable}>
+            <button
+              // onClick={fooController.submit}
+              disabled={!fooSubmittable}
+            >
               Submit
             </button>
           </div>
@@ -181,7 +183,7 @@ export function Playground() {
               <FooForm.Select id='color' label='Color' options={colorOptions} />
             </FooForm.Stage>
           </FooForm>
-        </div> */}
+        </div>
       </div>
     </>
   );

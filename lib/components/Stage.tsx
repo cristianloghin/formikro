@@ -6,23 +6,21 @@ export interface StageProps<T> {
   children: React.ReactNode;
 }
 
-export function Stage<T extends string>(
-  clientInstance: Client,
-  props: StageProps<T>
-) {
+export function Stage<T extends string>(client: Client, props: StageProps<T>) {
   const { name, children } = props;
-  const { isComplete, isActive, formId } = useStage(clientInstance, name);
+  const { isComplete, isActive } = useStage(client, name);
 
   return (
     <fieldset
-      form={formId}
+      form={client.formId}
       name={name}
       style={{
         marginTop: 20,
         borderWidth: 1,
         borderStyle: 'solid',
         borderColor: isComplete ? 'green' : 'red',
-        backgroundColor: isActive ? 'white' : '#EEE',
+        pointerEvents: isActive ? 'auto' : 'none',
+        opacity: isActive ? 1 : 0.5,
       }}
     >
       {children}

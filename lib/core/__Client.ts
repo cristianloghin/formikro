@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ActionKey, ActionPayload } from './Actions';
-import StageManager from './StageManager';
+import StageManager from './__StageManager';
 import { StageState } from './__StateManager';
 
 class Client {
