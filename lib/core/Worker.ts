@@ -1,18 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { FormData } from './types';
-import formActions, { ActionKey, ActionPayload } from './Actions';
+import formActions, { ActionData, ActionKey, ActionPayload } from './Actions';
 
-class FormWorker {
+export class Worker {
   mutateState(
     action: ActionKey,
     payload: ActionPayload<ActionKey>,
-    data: FormData
-  ): FormData {
-    const newState = { ...data };
+    data: ActionData
+  ): ActionData {
     const actionCallback = formActions[action] as any; // ¯\_(ツ)_/¯
-
-    return actionCallback(payload)(newState);
+    return actionCallback(payload)(data);
   }
 }
-
-export default FormWorker;

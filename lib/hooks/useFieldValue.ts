@@ -1,25 +1,27 @@
-import { useRef, useState, useEffect, useCallback } from 'react';
-import Form from '../core/Form';
-import { FieldValue, FormObserver } from '../core/types';
+import { useState, useEffect, useCallback } from 'react';
+import { FieldValue } from '../core/types';
+import { Client } from '../core/Client';
 
-export function useFieldValue(Form: Form, fieldId: string) {
-  const uid = useRef(Math.random().toString(36).substring(2, 8));
-  const Field = Form.getField(fieldId);
-  const [value, setValue] = useState<FieldValue>(Field.value);
+export function useFieldValue(client: Client, fieldId: string) {
+  const field = client.getField(fieldId);
+  const uid = field?.uid;
+  const [value, setValue] = useState<FieldValue>(field?.value);
 
   // set up an observer
-  const fieldObserver = useCallback<FormObserver>(() => {
-    setValue(Field.value);
-  }, [Field]);
+  const fieldObserver = useCallback(() => {
+    setValue(field?.value);
+  }, [field]);
 
   // subscribe to value change
   useEffect(() => {
-    const observerId = uid.current;
-    const action = `SET_FIELD_VALUE:${Field.stageId}:${Field.id}`;
-    Form.subscribe(action, fieldObserver, observerId);
+    const action = `SET_FIELD_VALUE`;
+    client.subscribe(action, fieldObserver, uid!);
 
-    return () => Form?.unsubscribe(action, observerId);
-  }, [Form, Field, fieldObserver]);
+    return () => client.unsubscribe(action, uid!);
+  }, [client, field, fieldObserver, uid]);
 
-  return { value, isRequired: Field.isRequired };
+  return {
+    value,
+    isRequired: field?.isRequired,
+  };
 }

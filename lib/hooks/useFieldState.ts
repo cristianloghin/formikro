@@ -1,26 +1,24 @@
-import { useRef, useState, useEffect, useCallback } from 'react';
-import Form from '../core/Form';
-import { FormObserver } from '../core/types';
-import { FieldState } from '../core/StateManager';
+import { useState, useEffect, useCallback } from 'react';
+import { Client } from '../core/Client';
 
-export function useFieldState(Form: Form, fieldId: string) {
-  const uid = useRef(Math.random().toString(36).substring(2, 8));
-  const Field = Form.getField(fieldId);
-  const [state, setState] = useState<FieldState>(Field.currentState);
+export function useFieldState(client: Client, id: string) {
+  const field = client.getField(id);
+  const uid = field?.uid;
+
+  const [currentState, setCurrentState] = useState(field?.currentState);
 
   // set up an observer
-  const fieldObserver = useCallback<FormObserver>(() => {
-    setState(Field.currentState);
-  }, [Field]);
+  const fieldObserver = useCallback(() => {
+    setCurrentState(field?.currentState);
+  }, [field]);
 
   // subscribe to value change
   useEffect(() => {
-    const observerId = uid.current;
-    const action = `SET_FIELD_STATE:${Field.stageId}:${Field.id}`;
-    Form.subscribe(action, fieldObserver, observerId);
+    const action = `SET_FIELD_STATE`;
+    client.subscribe(action, fieldObserver, uid!);
 
-    return () => Form?.unsubscribe(action, observerId);
-  }, [Form, Field, fieldObserver]);
+    return () => client.unsubscribe(action, uid!);
+  }, [client, field, fieldObserver, uid]);
 
-  return state;
+  return currentState;
 }

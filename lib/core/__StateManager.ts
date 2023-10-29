@@ -65,7 +65,7 @@ class NodeState implements State {
   }
 }
 
-export class StateManager {
+class FormStateManager {
   private stateInstance: State;
 
   constructor(node: NodeType) {
@@ -81,3 +81,5 @@ export class StateManager {
     return false;
   }
 }
+
+export default FormStateManager;

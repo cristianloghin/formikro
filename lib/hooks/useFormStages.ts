@@ -1,25 +1,24 @@
 import { useCallback, useState, useRef, useEffect } from 'react';
-import Form from '../core/Form';
+import { Client } from '../core/Client';
 
-export function useFormStages(Form: Form) {
+export function useFormStages(client: Client) {
   const uid = useRef(Math.random().toString(36).substring(2, 8));
-  const Client = Form.getClient();
-  const [stages, setStages] = useState(Client.getStages());
+  const [stages, setStages] = useState(client.getStages());
 
   const formObserver = useCallback(() => {
-    const stages = Client.getStages();
+    const stages = client.getStages();
 
     setStages(stages);
-  }, [Client]);
+  }, [client]);
 
   useEffect(() => {
     const observerId = uid.current;
     const action = 'SET_ACTIVE_STAGE';
 
-    Form.subscribe(action, formObserver, observerId);
+    client.subscribe(action, formObserver, observerId);
 
-    return () => Form?.unsubscribe(action, observerId);
-  }, [Form, formObserver]);
+    return () => client.unsubscribe(action, observerId);
+  }, [client, formObserver]);
 
   return stages;
 }

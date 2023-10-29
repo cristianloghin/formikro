@@ -1,26 +1,31 @@
 import { useCallback, useMemo } from 'react';
-import Form from '../core/Form';
+import { Client } from '../core/Client';
 
 type Elements = HTMLInputElement | HTMLSelectElement;
 
-export function useFieldActions(Form: Form, fieldId: string) {
-  const dispatch = Form.dispatch;
-  const { stageId, validate } = Form.getField(fieldId);
+export function useFieldActions(client: Client, id: string) {
+  const field = client.getField(id);
+  const uid = field?.uid;
+  const validate = field?.validate;
 
   const debouncedValidation = useMemo(() => {
-    return debounce(validate, 800);
+    if (validate) return debounce(validate, 800);
   }, [validate]);
 
   const handleChange = useCallback(
     (e: React.ChangeEvent<Elements>) => {
-      dispatch('SET_FIELD_VALUE', {
-        value: e.target.value,
-        path: [stageId, fieldId],
-      });
+      client.dispatch(
+        'SET_FIELD_VALUE',
+        {
+          id,
+          value: e.target.value,
+        },
+        uid
+      );
 
-      debouncedValidation(e.target.value);
+      debouncedValidation && debouncedValidation(e.target.value);
     },
-    [dispatch, debouncedValidation, stageId, fieldId]
+    [client, id, uid, debouncedValidation]
   );
 
   return handleChange;

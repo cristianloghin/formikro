@@ -58,35 +58,30 @@ export function Playground() {
 
   const FooForm = useFormikro<FooForm, StagesFoo>('FooForm', {
     onSubmit: saveFoo,
-    multiStage: true,
-    data: {
-      FOO: {
-        pants: {
-          isRequired: true,
-        },
-        brand: {
-          isRequired: false,
-        },
+    stages: ['FOO', 'BANG', 'BAR'],
+    fields: {
+      pants: {
+        isRequired: true,
+        stage: 'FOO',
       },
-      BANG: {
-        size: {
-          isRequired: true,
-        },
+      brand: {
+        isRequired: false,
+        stage: 'FOO',
       },
-      BAR: {
-        color: {
-          isRequired: true,
-          sideEffects: {
-            clear: ['brand', 'pants'],
-          },
-        },
+      size: {
+        isRequired: true,
+        stage: 'BANG',
+      },
+      color: {
+        isRequired: true,
+        stage: 'BAR',
       },
     },
   });
 
   const BarForm = useFormikro<BarForm>('BarForm', {
     onSubmit: saveBar,
-    data: {
+    fields: {
       trousers: {
         isRequired: true,
         initialValue: 'Pantaloons',
@@ -108,14 +103,14 @@ export function Playground() {
 
   const {
     isSubmittable: barSubmittable,
-    stages: barStages,
-    controller: barController,
+    // stages: barStages,
+    // controller: barController,
   } = useFormikroClient('BarForm');
-  const {
-    isSubmittable: fooSubmittable,
-    stages: fooStages,
-    controller: fooController,
-  } = useFormikroClient('FooForm');
+  // const {
+  //   isSubmittable: fooSubmittable,
+  //   stages: fooStages,
+  //   controller: fooController,
+  // } = useFormikroClient('FooForm');
 
   return (
     <>
@@ -125,30 +120,26 @@ export function Playground() {
       >
         <div>
           <h2>Bar Form</h2>
-          <p>
-            Stage: {barStages.active} {barStages.activeState}
-          </p>
-          <div
-            style={{
-              display: 'grid',
-              width: '100%',
-              gridTemplateColumns: 'repeat(2, 1fr)',
-              gap: '.66rem',
-            }}
-          >
-            <button disabled>Reset</button>
-            <button onClick={barController.submit} disabled={!barSubmittable}>
-              Submit
-            </button>
-          </div>
           <BarForm>
             <BarForm.Input id='trousers' label='Trousers' />
             <BarForm.Input id='maker' label='Maker' />
             <BarForm.Input id='dimensions' label='Dimensions' />
             <BarForm.Input id='shade' label='Shade' />
           </BarForm>
+          <div
+            style={{
+              display: 'grid',
+              width: '100%',
+              marginTop: '1rem',
+              gridTemplateColumns: 'repeat(2, 1fr)',
+              gap: '.66rem',
+            }}
+          >
+            <button disabled>Reset</button>
+            <button disabled={!barSubmittable}>Submit</button>
+          </div>
         </div>
-        <div>
+        {/* <div>
           <h2>Foo Form</h2>
           <p>
             Stage: {fooStages.active} {fooStages.activeState}
@@ -190,7 +181,7 @@ export function Playground() {
               <FooForm.Select id='color' label='Color' options={colorOptions} />
             </FooForm.Stage>
           </FooForm>
-        </div>
+        </div> */}
       </div>
     </>
   );

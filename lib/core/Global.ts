@@ -1,7 +1,7 @@
-import Form from './Form';
-import { DynamicFields } from './types';
-
-export type FieldValue = string | number | undefined;
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { Form, BasicForm, MultistageForm } from './Form';
+import { Client } from './Client';
+import { FormikroOptions } from '../hooks/useFormikro';
 
 class Global {
   private static instance: Global;
@@ -14,22 +14,31 @@ class Global {
     return Global.instance;
   }
 
-  initialize<T>(formId: string, data: Record<string, DynamicFields<T>>): Form {
-    let form = this.forms.get(formId);
+  initialize<T, K extends string>(
+    formId: string,
+    options: FormikroOptions<T, K>
+  ): Client {
+    let formInstance = this.forms.get(formId);
 
-    if (!form) {
-      form = new Form(formId, data);
-      this.forms.set(formId, form);
+    if (!formInstance) {
+      if (!options.stages) {
+        formInstance = new Form(new BasicForm(formId, options.fields));
+      } else {
+        formInstance = new Form(
+          new MultistageForm(formId, options.fields, options.stages)
+        );
+      }
+      this.forms.set(formId, formInstance);
     }
 
-    return form;
+    return formInstance.getClient();
   }
 
   getForm(formName: string): Form {
     const Form = this.forms.get(formName);
 
     if (!Form) {
-      throw `${formName} does not exist.`;
+      throw new Error(`${formName} does not exist.`);
     }
 
     return Form;

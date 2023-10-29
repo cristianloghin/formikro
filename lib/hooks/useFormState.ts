@@ -1,26 +1,25 @@
 import { useRef, useState, useEffect, useCallback } from 'react';
-import Form from '../core/Form';
-import { FormObserver } from '../core/types';
+import { Client } from '../core/Client';
 
-export function useFormState(Form: Form) {
+export function useFormState(client: Client) {
   const uid = useRef(Math.random().toString(36).substring(2, 8));
   const [isSubmittable, setIsSubmittable] = useState(
-    Form.data.currentState === 'SUBMITTABLE'
+    client.formState === 'SUBMITTABLE'
   );
 
   // set up an observer
-  const formObserver = useCallback<FormObserver>(() => {
-    setIsSubmittable(Form.data.currentState === 'SUBMITTABLE');
-  }, [Form]);
+  const formObserver = useCallback(() => {
+    setIsSubmittable(client.formState === 'SUBMITTABLE');
+  }, [client]);
 
   // subscribe to value change
   useEffect(() => {
     const observerId = uid.current;
     const action = 'SET_FORM_STATE';
-    Form.subscribe(action, formObserver, observerId);
+    client.subscribe(action, formObserver, observerId);
 
-    return () => Form?.unsubscribe(action, observerId);
-  }, [Form, formObserver]);
+    return () => client.unsubscribe(action, observerId);
+  }, [client, formObserver]);
 
-  return isSubmittable;
+  return { isSubmittable };
 }

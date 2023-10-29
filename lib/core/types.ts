@@ -1,5 +1,5 @@
-import Stage from './Stage';
-import { FormState, StageState } from './StateManager';
+import Stage from './__Stage';
+import { FormState, StageState } from './__StateManager';
 
 export type FieldValue = string | number | undefined;
 

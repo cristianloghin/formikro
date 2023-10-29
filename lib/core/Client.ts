@@ -1,56 +1,45 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import { FormType, Stageable } from './Form';
+import { Field } from './Field';
+import { Stage } from './Stage';
+import { FormObserver } from './EventBus';
 import { ActionKey, ActionPayload } from './Actions';
-import StageManager from './StageManager';
-import { StageState } from './StateManager';
 
-class Client {
-  private stageManager: StageManager;
-  private getActiveStage: () => [string, StageState];
+export class Client {
+  constructor(private formType: FormType & Partial<Stageable>) {}
 
-  constructor(
-    private metadata: { formId: string },
-    stages: string[],
-    getActiveStage: () => [string, StageState],
-    private dispatch: (
-      action: ActionKey,
-      payload: ActionPayload<ActionKey>
-    ) => void
+  getField(id: string): Field | null {
+    return this.formType.getField(id);
+  }
+
+  getStage(id: string): Stage | null {
+    if ('getStage' in this.formType) {
+      return this.formType.getStage!(id);
+    } else {
+      return null;
+    }
+  }
+
+  get formId() {
+    return this.formType.getFormId();
+  }
+
+  get formState() {
+    return this.formType.getFormState();
+  }
+
+  subscribe(action: ActionKey, observer: FormObserver, uid: string) {
+    return this.formType.subscribe(action, observer, uid);
+  }
+
+  unsubscribe(action: ActionKey, uid: string) {
+    return this.formType.unsubscribe(action, uid);
+  }
+
+  dispatch(
+    action: ActionKey,
+    payload: ActionPayload<ActionKey>,
+    observerId?: string
   ) {
-    this.stageManager = new StageManager(stages, this.dispatch);
-    this.getActiveStage = getActiveStage;
-  }
-
-  getFormId(): string {
-    return this.metadata.formId;
-  }
-
-  goToNextStage() {
-    const [activeStage] = this.getActiveStage();
-    this.stageManager.goToNextStage(activeStage);
-  }
-
-  goToPreviousStage() {
-    const [activeStage] = this.getActiveStage();
-    this.stageManager.goToPreviousStage(activeStage);
-  }
-
-  getStages(): {
-    previous: string | undefined;
-    active: string;
-    activeState: StageState;
-    next: string | undefined;
-  } {
-    const [active, activeState] = this.getActiveStage();
-    const previous = this.stageManager.getPrevious(active);
-    const next = this.stageManager.getNext(active);
-
-    return {
-      previous,
-      active,
-      activeState,
-      next,
-    };
+    return this.formType.dispatch(action, payload, observerId);
   }
 }
-
-export default Client;
