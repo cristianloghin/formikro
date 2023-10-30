@@ -1,20 +1,27 @@
 import { useCallback } from 'react';
 import Global from '../core/Global';
-import { FieldValue } from '../core/types';
+import { FieldValue } from '../core/Field';
 import { Input, InputProps } from '../components/Input';
 import { Select, SelectProps } from '../components/Select';
 import { Stage, StageProps } from '../components/Stage';
 
-type FormikroField<T, K> = {
+type SideEffects<K> = {
+  clear: K[];
+  validate: K[];
+};
+
+type FormikroField<T, K, S> = {
   isRequired: boolean;
+  validator?: (value: FieldValue) => Promise<string>;
   initialValue?: T;
   stage?: K;
+  sideEffects?: SideEffects<S>;
 };
 
 export type FormikroOptions<T, K extends string> = {
   onSubmit: (fields: T) => Promise<unknown>;
   fields: {
-    [field in keyof T]: FormikroField<T[field], K>;
+    [field in keyof T]: FormikroField<T[field], K, Exclude<keyof T, field>>;
   };
   stages?: K[];
 };

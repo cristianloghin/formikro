@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useFormikro, useFormikroClient } from '../lib/main';
+import { FieldValue, useFormikro, useFormikroClient } from '../lib/main';
 
 type FooForm = {
   pants: string;
@@ -62,10 +62,12 @@ export function Playground() {
     fields: {
       pants: {
         isRequired: true,
+        validator: validatePants,
         stage: 'FOO',
       },
       brand: {
         isRequired: false,
+        validator: validatePants,
         stage: 'FOO',
       },
       size: {
@@ -89,6 +91,10 @@ export function Playground() {
       maker: {
         isRequired: false,
         initialValue: 'Joes',
+        sideEffects: {
+          clear: ['dimensions'],
+          validate: ['shade'],
+        },
       },
       dimensions: {
         isRequired: true,
@@ -97,6 +103,7 @@ export function Playground() {
       shade: {
         isRequired: false,
         initialValue: 'red',
+        validator: validateShade,
       },
     },
   });
@@ -115,7 +122,12 @@ export function Playground() {
     <>
       <h1>Playground</h1>
       <div
-        style={{ display: 'grid', gap: '1rem', gridTemplateColumns: '1fr 2fr' }}
+        style={{
+          display: 'grid',
+          gap: '1rem',
+          gridTemplateColumns: '1fr 2fr',
+          width: 800,
+        }}
       >
         <div>
           <h2>Bar Form</h2>
@@ -140,9 +152,6 @@ export function Playground() {
         </div>
         <div>
           <h2>Foo Form</h2>
-          {/* <p>
-            Stage: {fooStages.active} {fooStages.activeState}
-          </p> */}
           <div
             style={{
               display: 'grid',
@@ -187,4 +196,28 @@ export function Playground() {
       </div>
     </>
   );
+}
+
+function validatePants(value: FieldValue) {
+  return new Promise<string>((resolve, reject) => {
+    setTimeout(() => {
+      if (value === 'pants') {
+        reject('No pants please.');
+      } else {
+        resolve('');
+      }
+    }, 1500);
+  });
+}
+
+function validateShade(shade: FieldValue) {
+  return new Promise<string>((resolve, reject) => {
+    setTimeout(() => {
+      if (shade === 'pink') {
+        reject('Joez does not make pink pants.');
+      } else {
+        resolve('');
+      }
+    }, 1500);
+  });
 }

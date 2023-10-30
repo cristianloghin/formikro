@@ -23,9 +23,31 @@ export function useFieldActions(client: Client, id: string) {
         uid
       );
 
-      debouncedValidation && debouncedValidation(e.target.value);
+      if (field?.sideEffects) {
+        const { clear, validate } = field.sideEffects;
+        if (clear) {
+          clear.forEach((id) => {
+            const target = client.getField(id);
+            client.dispatch(
+              'SET_FIELD_VALUE',
+              { id, value: undefined },
+              target?.uid
+            );
+            target?.validate();
+          });
+        }
+
+        if (validate) {
+          validate.forEach((id) => {
+            const target = client.getField(id);
+            target?.validate();
+          });
+        }
+      }
+
+      debouncedValidation && debouncedValidation();
     },
-    [client, id, uid, debouncedValidation]
+    [client, id, uid, field, debouncedValidation]
   );
 
   return handleChange;

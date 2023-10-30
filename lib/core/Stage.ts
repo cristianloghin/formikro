@@ -1,6 +1,5 @@
 import { FormDispatch } from './Form';
-import { StateManager } from './StateManager';
-import { StageState } from './__StateManager';
+import { StateManager, StageState } from './StateManager';
 
 export class Stage {
   id: string;

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { FieldValue } from '../core/types';
+import { FieldValue } from '../core/__types';
 import { Client } from '../core/Client';
 
 export function useFieldValue(client: Client, fieldId: string) {

@@ -52,20 +52,4 @@ export class StageManager {
       });
     }
   }
-
-  // getPrevious(current: string): string | undefined {
-  //   if (this.hasPreviousStage(current)) {
-  //     return this.transitions.get(current)?.previous;
-  //   } else {
-  //     return undefined;
-  //   }
-  // }
-
-  // getNext(current: string): string | undefined {
-  //   if (this.hasNextStage(current)) {
-  //     return this.transitions.get(current)?.next;
-  //   } else {
-  //     return undefined;
-  //   }
-  // }
 }

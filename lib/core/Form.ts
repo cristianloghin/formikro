@@ -98,13 +98,7 @@ abstract class AbstractForm implements FormType {
 export class BasicForm extends AbstractForm {
   protected createField(id: string, data: FieldData): Field {
     const fieldInstance = new Field(
-      new BasicField(
-        id,
-        data.isRequired,
-        data.initialValue,
-        this.dispatch,
-        this.validate
-      )
+      new BasicField(id, data, this.dispatch, this.validate)
     );
     return fieldInstance;
   }
@@ -167,14 +161,7 @@ export class MultistageForm extends AbstractForm implements Stageable {
 
   protected createField(id: string, data: FieldData): Field {
     const fieldInstance = new Field(
-      new StageField(
-        id,
-        data.stage!,
-        data.isRequired,
-        data.initialValue,
-        this.dispatch,
-        this.validate
-      )
+      new StageField(id, data, this.dispatch, this.validate)
     );
 
     return fieldInstance;

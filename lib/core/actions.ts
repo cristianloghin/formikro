@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Field, FieldValue } from './Field';
-import { Form, FormType } from './Form';
 import { Stage } from './Stage';
 import { FieldState, FormState, StageState } from './StateManager';
 
@@ -26,12 +25,13 @@ const formActions = {
       return data;
     },
   SET_FIELD_STATE:
-    ({ id, state }: { id: string; state: FieldState }) =>
+    ({ id, state, error }: { id: string; state: FieldState; error: string }) =>
     (data: ActionData) => {
       const field = data.fields.get(id);
 
       if (field) {
         field.currentState = state;
+        field.error = error;
       }
 
       return data;
@@ -64,9 +64,6 @@ const formActions = {
 
       return data;
     },
-  SET_FORM: (payload: Partial<Form>) => (form: FormType) => {
-    console.log(payload, form);
-  },
 } as const;
 
 export default formActions;

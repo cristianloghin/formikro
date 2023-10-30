@@ -1,16 +1,13 @@
-import { FieldProps } from '../core/types';
+import { FieldProps } from '.';
 import { Client } from '../core/Client';
 import { useFieldValue, useFieldActions, useFieldState } from '../hooks';
-// import { useField } from '../hooks';
 
 export interface InputProps<T> extends FieldProps<T> {}
 
 export function Input<T>(client: Client, { id, label }: FieldProps<T>) {
   const { value, isRequired } = useFieldValue(client, id);
-  const currentState = useFieldState(client, id);
+  const { currentState, error } = useFieldState(client, id);
   const handleInput = useFieldActions(client, id);
-
-  // const { state, controller } = useField(client, id);
 
   return (
     <div style={{ marginTop: '1rem' }}>
@@ -28,6 +25,9 @@ export function Input<T>(client: Client, { id, label }: FieldProps<T>) {
           value={value || ''}
           onChange={handleInput}
         />
+        {error && (
+          <span style={{ color: 'red', fontSize: '.75rem' }}>{error}</span>
+        )}
       </div>
     </div>
   );

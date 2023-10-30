@@ -6,10 +6,14 @@ export function useFieldState(client: Client, id: string) {
   const uid = field?.uid;
 
   const [currentState, setCurrentState] = useState(field?.currentState);
+  const [error, setError] = useState('');
 
   // set up an observer
   const fieldObserver = useCallback(() => {
-    setCurrentState(field?.currentState);
+    if (field) {
+      setCurrentState(field.currentState);
+      setError(field.error);
+    }
   }, [field]);
 
   // subscribe to value change
@@ -20,5 +24,5 @@ export function useFieldState(client: Client, id: string) {
     return () => client.unsubscribe(action, uid!);
   }, [client, field, fieldObserver, uid]);
 
-  return currentState;
+  return { currentState, error };
 }

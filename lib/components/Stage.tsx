@@ -11,19 +11,19 @@ export function Stage<T extends string>(client: Client, props: StageProps<T>) {
   const { isComplete, isActive } = useStage(client, name);
 
   return (
-    <fieldset
-      form={client.formId}
-      name={name}
-      style={{
-        marginTop: 20,
-        borderWidth: 1,
-        borderStyle: 'solid',
-        borderColor: isComplete ? 'green' : 'red',
-        pointerEvents: isActive ? 'auto' : 'none',
-        opacity: isActive ? 1 : 0.5,
-      }}
-    >
-      {children}
-    </fieldset>
+    isActive && (
+      <fieldset
+        form={client.formId}
+        name={name}
+        style={{
+          marginTop: 20,
+          borderWidth: 1,
+          borderStyle: 'solid',
+          borderColor: isComplete ? 'green' : 'red',
+        }}
+      >
+        {children}
+      </fieldset>
+    )
   );
 }
