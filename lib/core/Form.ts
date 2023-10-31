@@ -3,7 +3,7 @@ import { Client } from './Client';
 import { Command } from './Command';
 import { Worker } from './Worker';
 import { EventBus, FormObserver } from './EventBus';
-import { BasicField, Field, FieldData, StageField } from './Field';
+import { BasicField, Field, FieldData, FieldValue, StageField } from './Field';
 import { Stage } from './Stage';
 import { FieldState, FormState, StateManager } from './StateManager';
 import { StageManager } from './StageManager';
@@ -43,6 +43,7 @@ abstract class AbstractForm implements FormType {
     this.currentState = FormState.NOT_SUBMITTABLE;
     this.dispatch = this.dispatch.bind(this);
     this.validate = this.validate.bind(this);
+    this.getFieldData = this.getFieldData.bind(this);
 
     Object.entries(fields).forEach(([name, value]) => {
       const fieldInstance = this.createField(name, value);
@@ -61,6 +62,16 @@ abstract class AbstractForm implements FormType {
 
   getField(id: string): Field | null {
     return this.fields.get(id) || null;
+  }
+
+  getFieldData(): Record<string, FieldValue> {
+    const result: Record<string, FieldValue> = {};
+
+    this.fields.forEach((field, key) => {
+      result[key] = field.value;
+    });
+
+    return result;
   }
 
   getFormId(): string {
@@ -98,7 +109,7 @@ abstract class AbstractForm implements FormType {
 export class BasicForm extends AbstractForm {
   protected createField(id: string, data: FieldData): Field {
     const fieldInstance = new Field(
-      new BasicField(id, data, this.dispatch, this.validate)
+      new BasicField(id, data, this.dispatch, this.validate, this.getFieldData)
     );
     return fieldInstance;
   }
@@ -161,7 +172,7 @@ export class MultistageForm extends AbstractForm implements Stageable {
 
   protected createField(id: string, data: FieldData): Field {
     const fieldInstance = new Field(
-      new StageField(id, data, this.dispatch, this.validate)
+      new StageField(id, data, this.dispatch, this.validate, this.getFieldData)
     );
 
     return fieldInstance;

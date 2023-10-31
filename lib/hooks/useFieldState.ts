@@ -10,18 +10,26 @@ export function useFieldState(client: Client, id: string) {
 
   // set up an observer
   const fieldObserver = useCallback(() => {
-    if (field) {
-      setCurrentState(field.currentState);
-      setError(field.error);
-    }
+    setCurrentState((state) => {
+      if (state === field?.currentState) {
+        return state;
+      }
+      return field?.currentState;
+    });
+
+    setError((error) => {
+      if (error === field?.error) {
+        return error;
+      }
+      return field?.error || '';
+    });
   }, [field]);
 
   // subscribe to value change
   useEffect(() => {
-    const action = `SET_FIELD_STATE`;
-    client.subscribe(action, fieldObserver, uid!);
+    client.subscribe('SET_FIELD_STATE', fieldObserver, uid!);
 
-    return () => client.unsubscribe(action, uid!);
+    return () => client.unsubscribe('SET_FIELD_STATE', uid!);
   }, [client, field, fieldObserver, uid]);
 
   return { currentState, error };

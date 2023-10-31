@@ -1,9 +1,21 @@
 import { useEffect, useState } from 'react';
-import { FieldValue, useFormikro, useFormikroClient } from '../lib/main';
+import { useFormikro, useFormikroClient } from '../lib/main';
+
+enum TYPES {
+  'cargo',
+  'capri',
+  'jeans',
+  'tracksuit',
+  'culottes',
+  'bell-bottoms',
+  'chinos',
+  'dress',
+}
 
 type FooForm = {
   pants: string;
   brand: string;
+  type: keyof typeof TYPES;
   size: number;
   color: 'red' | 'blue';
 };
@@ -45,6 +57,10 @@ function saveBar(data: BarForm) {
 type StagesFoo = 'FOO' | 'BANG' | 'BAR';
 
 export function Playground() {
+  const typeOptions: [string, string][] = Object.values(TYPES)
+    .filter((type) => typeof type === 'string')
+    .map((type) => [type.toString(), type.toString()]);
+
   const [colorOptions, setColorOptions] = useState<[string, string][]>([]);
 
   useEffect(() => {
@@ -62,17 +78,23 @@ export function Playground() {
     fields: {
       pants: {
         isRequired: true,
-        validator: validatePants,
+        validators: [(data) => validatePants(data.pants)],
         stage: 'FOO',
       },
       brand: {
         isRequired: false,
-        validator: validatePants,
+        validators: [(data) => validatePants(data.brand)],
         stage: 'FOO',
+      },
+      type: {
+        isRequired: true,
+        initialValue: 'chinos',
+        stage: 'BANG',
       },
       size: {
         isRequired: true,
         stage: 'BANG',
+        disable: (data) => !data.type,
       },
       color: {
         isRequired: true,
@@ -103,7 +125,7 @@ export function Playground() {
       shade: {
         isRequired: false,
         initialValue: 'red',
-        validator: validateShade,
+        validators: [(data) => validateShade(data.maker, data.shade)],
       },
     },
   });
@@ -186,6 +208,7 @@ export function Playground() {
               <FooForm.Input id='brand' label='Brand' />
             </FooForm.Stage>
             <FooForm.Stage name='BANG'>
+              <FooForm.Select id='type' label='Type' options={typeOptions} />
               <FooForm.Input id='size' label='Size' />
             </FooForm.Stage>
             <FooForm.Stage name='BAR'>
@@ -198,11 +221,13 @@ export function Playground() {
   );
 }
 
-function validatePants(value: FieldValue) {
+function validatePants(value: string) {
   return new Promise<string>((resolve, reject) => {
     setTimeout(() => {
       if (value === 'pants') {
         reject('No pants please.');
+      } else if (value.length < 3) {
+        reject('Longer pants please.');
       } else {
         resolve('');
       }
@@ -210,10 +235,10 @@ function validatePants(value: FieldValue) {
   });
 }
 
-function validateShade(shade: FieldValue) {
+function validateShade(maker: string, shade: string) {
   return new Promise<string>((resolve, reject) => {
     setTimeout(() => {
-      if (shade === 'pink') {
+      if (shade === 'pink' && maker === 'Joez') {
         reject('Joez does not make pink pants.');
       } else {
         resolve('');

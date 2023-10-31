@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { FieldValue } from '../core/__types';
+import { FieldValue } from '../core/Field';
 import { Client } from '../core/Client';
 
 export function useFieldValue(client: Client, fieldId: string) {
@@ -9,7 +9,12 @@ export function useFieldValue(client: Client, fieldId: string) {
 
   // set up an observer
   const fieldObserver = useCallback(() => {
-    setValue(field?.value);
+    setValue((currentValue) => {
+      if (currentValue === field?.value) {
+        return currentValue;
+      }
+      return field?.value;
+    });
   }, [field]);
 
   // subscribe to value change

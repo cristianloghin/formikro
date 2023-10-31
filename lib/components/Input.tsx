@@ -24,6 +24,7 @@ export function Input<T>(client: Client, { id, label }: FieldProps<T>) {
           type='text'
           value={value || ''}
           onChange={handleInput}
+          // disabled={isDisabled}
         />
         {error && (
           <span style={{ color: 'red', fontSize: '.75rem' }}>{error}</span>

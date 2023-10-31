@@ -10,18 +10,21 @@ type SideEffects<K> = {
   validate: K[];
 };
 
-type FormikroField<T, K, S> = {
+type Validator<T> = (data: T) => Promise<string>;
+
+type FormikroField<T, F extends keyof T, K> = {
   isRequired: boolean;
-  validator?: (value: FieldValue) => Promise<string>;
-  initialValue?: T;
+  validators?: Validator<T>[];
+  disable?: (data: T) => boolean;
+  initialValue?: T[F];
   stage?: K;
-  sideEffects?: SideEffects<S>;
+  sideEffects?: SideEffects<Exclude<keyof T, F>>;
 };
 
 export type FormikroOptions<T, K extends string> = {
   onSubmit: (fields: T) => Promise<unknown>;
   fields: {
-    [field in keyof T]: FormikroField<T[field], K, Exclude<keyof T, field>>;
+    [field in keyof T]: FormikroField<T, field, K>;
   };
   stages?: K[];
 };

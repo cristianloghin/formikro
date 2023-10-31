@@ -5,7 +5,6 @@ type Elements = HTMLInputElement | HTMLSelectElement;
 
 export function useFieldActions(client: Client, id: string) {
   const field = client.getField(id);
-  const uid = field?.uid;
   const validate = field?.validate;
 
   const debouncedValidation = useMemo(() => {
@@ -14,25 +13,17 @@ export function useFieldActions(client: Client, id: string) {
 
   const handleChange = useCallback(
     (e: React.ChangeEvent<Elements>) => {
-      client.dispatch(
-        'SET_FIELD_VALUE',
-        {
-          id,
-          value: e.target.value,
-        },
-        uid
-      );
+      client.dispatch('SET_FIELD_VALUE', {
+        id,
+        value: e.target.value,
+      });
 
       if (field?.sideEffects) {
         const { clear, validate } = field.sideEffects;
         if (clear) {
           clear.forEach((id) => {
             const target = client.getField(id);
-            client.dispatch(
-              'SET_FIELD_VALUE',
-              { id, value: undefined },
-              target?.uid
-            );
+            client.dispatch('SET_FIELD_VALUE', { id, value: undefined });
             target?.validate();
           });
         }
@@ -45,9 +36,10 @@ export function useFieldActions(client: Client, id: string) {
         }
       }
 
+      // Validate this field
       debouncedValidation && debouncedValidation();
     },
-    [client, id, uid, field, debouncedValidation]
+    [client, id, field, debouncedValidation]
   );
 
   return handleChange;

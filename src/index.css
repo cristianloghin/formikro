@@ -62,6 +62,10 @@ input:invalid {
   border: 1px solid var(--color-warning);
 }
 
+input:disabled {
+  background-color: var(--color-disabled);
+}
+
 button {
   padding: .4rem .8rem;
   border-radius: .3rem;
