@@ -1,76 +1,46 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { ActionPayload, ActionKey } from './Actions';
-import Field from './Field';
-import FormStateManager, { FieldState, StageState } from './StateManager';
+import { FormDispatch } from './Form';
+import { StateManager, StageState } from './StateManager';
 
-class Stage {
+export class Stage {
   id: string;
+  index: number;
+  uid: string;
+  formId: string;
+  isActive: boolean;
   currentState: StageState;
-  fields = new Map<string, Field>();
-  stateManager: FormStateManager;
-  validateForm: () => void;
+  private stateManager = new StateManager('STAGE');
 
   constructor(
+    formId: string,
     id: string,
-    fields: Record<string, any>,
-    stageStateManager: FormStateManager,
-    fieldStateManager: FormStateManager,
-    private dispatch: (
-      action: ActionKey,
-      payload: ActionPayload<ActionKey>
-    ) => void,
-    validateForm: () => void
+    index: number,
+    private stageFieldsValid: (id: string) => boolean,
+    private dispatch: FormDispatch
   ) {
     this.id = id;
-    this.stateManager = stageStateManager;
-    this.validateForm = validateForm;
-    this.validate = this.validate.bind(this);
-
-    Object.entries(fields).forEach(([fieldName, field]) => {
-      this.fields.set(
-        fieldName,
-        new Field(
-          fieldName,
-          id,
-          field,
-          fieldStateManager,
-          this.dispatch,
-          this.validate
-        )
-      );
-    });
-
-    this.currentState = this.allFieldsValid()
+    this.uid = Math.random().toString(36).substring(2, 8);
+    this.index = index;
+    this.formId = formId;
+    this.isActive = index === 0;
+    this.currentState = stageFieldsValid(id)
       ? StageState.COMPLETE
       : StageState.INCOMPLETE;
   }
 
   validate() {
-    if (this.allFieldsValid()) {
+    if (this.stageFieldsValid(this.id)) {
       this.goToState(StageState.COMPLETE);
     } else {
       this.goToState(StageState.INCOMPLETE);
     }
   }
 
-  private allFieldsValid(): boolean {
-    const results: boolean[] = [];
-    this.fields.forEach((Field) => {
-      results.push(Field.currentState === FieldState.VALID);
-    });
-
-    return results.every((state) => state);
-  }
-
   private goToState(state: StageState) {
     if (this.stateManager.canTransitionTo(this.currentState, state)) {
       this.dispatch('SET_STAGE_STATE', {
-        value: state,
-        path: this.id,
+        id: this.id,
+        state,
       });
     }
-    this.validateForm(); // validate form
   }
 }
-
-export default Stage;

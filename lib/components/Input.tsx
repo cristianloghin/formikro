@@ -1,30 +1,34 @@
-import { FieldProps } from '../core/types';
+import { FieldProps } from '.';
+import { Client } from '../core/Client';
 import { useFieldValue, useFieldActions, useFieldState } from '../hooks';
-import Form from '../core/Form';
 
 export interface InputProps<T> extends FieldProps<T> {}
 
-export function Input<T>(Form: Form, { id, label }: FieldProps<T>) {
-  const { value, isRequired } = useFieldValue(Form, id);
-  const state = useFieldState(Form, id);
-  const handleInput = useFieldActions(Form, id);
+export function Input<T>(client: Client, { id, label }: FieldProps<T>) {
+  const { value, isRequired, isDisabled } = useFieldValue(client, id);
+  const { currentState, error } = useFieldState(client, id);
+  const handleInput = useFieldActions(client, id);
 
   return (
     <div style={{ marginTop: '1rem' }}>
       {label && (
         <label htmlFor={id}>
           {label}
-          {isRequired && '*'}({state})
+          {isRequired && '*'}({currentState})
         </label>
       )}
       <div style={{ marginTop: '.3rem' }}>
         <input
           id={id}
-          form={Form?.id}
+          form={client.formId}
           type='text'
           value={value || ''}
           onChange={handleInput}
+          disabled={isDisabled}
         />
+        {!isDisabled && error && (
+          <span style={{ color: 'red', fontSize: '.75rem' }}>{error}</span>
+        )}
       </div>
     </div>
   );

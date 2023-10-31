@@ -1,17 +1,12 @@
-import FormWorker from './Worker';
-import { ActionKey, ActionPayload } from './Actions';
-import { FormData } from './types';
+import { Worker } from './Worker';
+import { ActionData, ActionKey, ActionPayload } from './Actions';
 
-export interface Command {
-  execute(): void;
-}
-
-class FormCommand implements Command {
+export class Command {
   constructor(
-    private worker: FormWorker,
+    private worker: Worker,
     private action: ActionKey,
     private payload: ActionPayload<ActionKey>,
-    private data: FormData
+    private data: ActionData
   ) {}
 
   execute() {
@@ -25,5 +20,3 @@ class FormCommand implements Command {
     return newForm;
   }
 }
-
-export default FormCommand;

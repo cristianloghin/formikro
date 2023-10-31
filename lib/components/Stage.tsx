@@ -1,31 +1,29 @@
-import Form from '../core/Form';
-import { StageState } from '../core/StateManager';
-import { useStageState } from '../hooks';
-import { useFormStages } from '../hooks';
+import { Client } from '../core/Client';
+import { useStage } from '../hooks';
 
 export interface StageProps<T> {
   name: T;
   children: React.ReactNode;
 }
 
-export function Stage<T extends string>(Form: Form, props: StageProps<T>) {
+export function Stage<T extends string>(client: Client, props: StageProps<T>) {
   const { name, children } = props;
-  const state = useStageState(Form, name);
-  const stages = useFormStages(Form);
+  const { isComplete, isActive } = useStage(client, name);
 
   return (
-    <fieldset
-      form={Form.id}
-      name={name}
-      style={{
-        marginTop: 20,
-        borderWidth: 1,
-        borderStyle: 'solid',
-        borderColor: state === StageState.COMPLETE ? 'green' : 'red',
-        backgroundColor: stages.active === name ? 'white' : '#EEE',
-      }}
-    >
-      {children}
-    </fieldset>
+    isActive && (
+      <fieldset
+        form={client.formId}
+        name={name}
+        style={{
+          marginTop: 20,
+          borderWidth: 1,
+          borderStyle: 'solid',
+          borderColor: isComplete ? 'green' : 'red',
+        }}
+      >
+        {children}
+      </fieldset>
+    )
   );
 }

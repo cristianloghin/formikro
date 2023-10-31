@@ -1,9 +1,21 @@
 import { useEffect, useState } from 'react';
 import { useFormikro, useFormikroClient } from '../lib/main';
 
+enum TYPES {
+  'cargo',
+  'capri',
+  'jeans',
+  'tracksuit',
+  'culottes',
+  'bell-bottoms',
+  'chinos',
+  'dress',
+}
+
 type FooForm = {
   pants: string;
   brand: string;
+  type: keyof typeof TYPES;
   size: number;
   color: 'red' | 'blue';
 };
@@ -45,6 +57,10 @@ function saveBar(data: BarForm) {
 type StagesFoo = 'FOO' | 'BANG' | 'BAR';
 
 export function Playground() {
+  const typeOptions: [string, string][] = Object.values(TYPES)
+    .filter((type) => typeof type === 'string')
+    .map((type) => [type.toString(), type.toString()]);
+
   const [colorOptions, setColorOptions] = useState<[string, string][]>([]);
 
   useEffect(() => {
@@ -58,35 +74,38 @@ export function Playground() {
 
   const FooForm = useFormikro<FooForm, StagesFoo>('FooForm', {
     onSubmit: saveFoo,
-    multiStage: true,
-    data: {
-      FOO: {
-        pants: {
-          isRequired: true,
-        },
-        brand: {
-          isRequired: false,
-        },
+    stages: ['FOO', 'BANG', 'BAR'],
+    fields: {
+      pants: {
+        isRequired: true,
+        validators: [(data) => validatePants(data.pants)],
+        stage: 'FOO',
       },
-      BANG: {
-        size: {
-          isRequired: true,
-        },
+      brand: {
+        isRequired: false,
+        validators: [(data) => validatePants(data.brand)],
+        stage: 'FOO',
       },
-      BAR: {
-        color: {
-          isRequired: true,
-          sideEffects: {
-            clear: ['brand', 'pants'],
-          },
-        },
+      type: {
+        isRequired: true,
+        sideEffects: { clear: ['size'] },
+        stage: 'BANG',
+      },
+      size: {
+        isRequired: true,
+        stage: 'BANG',
+        disable: (data) => !data.type,
+      },
+      color: {
+        isRequired: true,
+        stage: 'BAR',
       },
     },
   });
 
   const BarForm = useFormikro<BarForm>('BarForm', {
     onSubmit: saveBar,
-    data: {
+    fields: {
       trousers: {
         isRequired: true,
         initialValue: 'Pantaloons',
@@ -94,6 +113,10 @@ export function Playground() {
       maker: {
         isRequired: false,
         initialValue: 'Joes',
+        sideEffects: {
+          clear: ['dimensions'],
+          validate: ['shade'],
+        },
       },
       dimensions: {
         isRequired: true,
@@ -102,18 +125,18 @@ export function Playground() {
       shade: {
         isRequired: false,
         initialValue: 'red',
+        validators: [(data) => validateShade(data.maker, data.shade)],
       },
     },
   });
 
   const {
     isSubmittable: barSubmittable,
-    stages: barStages,
-    controller: barController,
+    // controller: barController,
   } = useFormikroClient('BarForm');
   const {
     isSubmittable: fooSubmittable,
-    stages: fooStages,
+    stage,
     controller: fooController,
   } = useFormikroClient('FooForm');
 
@@ -121,38 +144,36 @@ export function Playground() {
     <>
       <h1>Playground</h1>
       <div
-        style={{ display: 'grid', gap: '1rem', gridTemplateColumns: '1fr 2fr' }}
+        style={{
+          display: 'grid',
+          gap: '1rem',
+          gridTemplateColumns: '1fr 2fr',
+          width: 800,
+        }}
       >
         <div>
           <h2>Bar Form</h2>
-          <p>
-            Stage: {barStages.active} {barStages.activeState}
-          </p>
-          <div
-            style={{
-              display: 'grid',
-              width: '100%',
-              gridTemplateColumns: 'repeat(2, 1fr)',
-              gap: '.66rem',
-            }}
-          >
-            <button disabled>Reset</button>
-            <button onClick={barController.submit} disabled={!barSubmittable}>
-              Submit
-            </button>
-          </div>
           <BarForm>
             <BarForm.Input id='trousers' label='Trousers' />
             <BarForm.Input id='maker' label='Maker' />
             <BarForm.Input id='dimensions' label='Dimensions' />
             <BarForm.Input id='shade' label='Shade' />
           </BarForm>
+          <div
+            style={{
+              display: 'grid',
+              width: '100%',
+              marginTop: '1rem',
+              gridTemplateColumns: 'repeat(2, 1fr)',
+              gap: '.66rem',
+            }}
+          >
+            <button disabled>Reset</button>
+            <button disabled={!barSubmittable}>Submit</button>
+          </div>
         </div>
         <div>
           <h2>Foo Form</h2>
-          <p>
-            Stage: {fooStages.active} {fooStages.activeState}
-          </p>
           <div
             style={{
               display: 'grid',
@@ -164,17 +185,20 @@ export function Playground() {
             <button disabled>Reset</button>
             <button
               onClick={fooController.previousStage}
-              disabled={!fooStages.previous}
+              disabled={!stage.canGoToPrevious}
             >
               Previous
             </button>
             <button
               onClick={fooController.nextStage}
-              disabled={!fooStages.next}
+              disabled={!stage.canGoToNext}
             >
               Next
             </button>
-            <button onClick={fooController.submit} disabled={!fooSubmittable}>
+            <button
+              // onClick={fooController.submit}
+              disabled={!fooSubmittable}
+            >
               Submit
             </button>
           </div>
@@ -184,6 +208,7 @@ export function Playground() {
               <FooForm.Input id='brand' label='Brand' />
             </FooForm.Stage>
             <FooForm.Stage name='BANG'>
+              <FooForm.Select id='type' label='Type' options={typeOptions} />
               <FooForm.Input id='size' label='Size' />
             </FooForm.Stage>
             <FooForm.Stage name='BAR'>
@@ -194,4 +219,30 @@ export function Playground() {
       </div>
     </>
   );
+}
+
+function validatePants(value: string) {
+  return new Promise<string>((resolve, reject) => {
+    setTimeout(() => {
+      if (value === 'pants') {
+        reject('No pants please.');
+      } else if (value.length < 3) {
+        reject('Longer pants please.');
+      } else {
+        resolve('');
+      }
+    }, 1500);
+  });
+}
+
+function validateShade(maker: string, shade: string) {
+  return new Promise<string>((resolve, reject) => {
+    setTimeout(() => {
+      if (shade === 'pink' && maker === 'Joez') {
+        reject('Joez does not make pink pants.');
+      } else {
+        resolve('');
+      }
+    }, 1500);
+  });
 }

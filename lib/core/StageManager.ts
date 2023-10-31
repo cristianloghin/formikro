@@ -1,19 +1,12 @@
-import { ActionKey, ActionPayload } from './Actions';
+import { FormDispatch } from './Form';
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-class StageManager {
+export class StageManager {
   private transitions = new Map<
     string,
     { next: string | undefined; previous: string | undefined }
   >();
 
-  constructor(
-    stages: string[],
-    private dispatch: (
-      action: ActionKey,
-      payload: ActionPayload<ActionKey>
-    ) => any
-  ) {
+  constructor(stages: string[], private dispatch: FormDispatch) {
     if (stages.length === 1) {
       this.transitions.set(stages[0], { next: undefined, previous: undefined });
     } else {
@@ -46,7 +39,7 @@ class StageManager {
   goToNextStage(current: string) {
     if (this.hasNextStage(current)) {
       const nextStage = this.transitions.get(current)!.next as string;
-      this.dispatch('SET_ACTIVE_STAGE', { value: nextStage, path: undefined });
+      this.dispatch('SET_ACTIVE_STAGE', { current, active: nextStage });
     }
   }
 
@@ -54,27 +47,9 @@ class StageManager {
     if (this.hasPreviousStage(current)) {
       const previousStage = this.transitions.get(current)!.previous as string;
       this.dispatch('SET_ACTIVE_STAGE', {
-        value: previousStage,
-        path: undefined,
+        current,
+        active: previousStage,
       });
     }
   }
-
-  getPrevious(current: string): string | undefined {
-    if (this.hasPreviousStage(current)) {
-      return this.transitions.get(current)?.previous;
-    } else {
-      return undefined;
-    }
-  }
-
-  getNext(current: string): string | undefined {
-    if (this.hasNextStage(current)) {
-      return this.transitions.get(current)?.next;
-    } else {
-      return undefined;
-    }
-  }
 }
-
-export default StageManager;

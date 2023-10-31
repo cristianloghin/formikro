@@ -1,26 +1,47 @@
 import { useCallback, useMemo } from 'react';
-import Form from '../core/Form';
+import { Client } from '../core/Client';
 
 type Elements = HTMLInputElement | HTMLSelectElement;
 
-export function useFieldActions(Form: Form, fieldId: string) {
-  const dispatch = Form.dispatch;
-  const { stageId, validate } = Form.getField(fieldId);
+export function useFieldActions(client: Client, id: string) {
+  const field = client.getField(id);
+  const validate = field?.validate;
 
   const debouncedValidation = useMemo(() => {
-    return debounce(validate, 800);
+    if (validate) return debounce(validate, 800);
   }, [validate]);
 
   const handleChange = useCallback(
     (e: React.ChangeEvent<Elements>) => {
-      dispatch('SET_FIELD_VALUE', {
+      client.dispatch('SET_FIELD_VALUE', {
+        id,
         value: e.target.value,
-        path: [stageId, fieldId],
       });
 
-      debouncedValidation(e.target.value);
+      if (field?.sideEffects) {
+        const { clear, validate } = field.sideEffects;
+        if (clear) {
+          clear.forEach((id) => {
+            const target = client.getField(id);
+            if (target?.value) {
+              client.dispatch('SET_FIELD_VALUE', { id, value: undefined });
+              target?.validate();
+            }
+          });
+        }
+
+        if (validate) {
+          validate.forEach((id) => {
+            const target = client.getField(id);
+            target?.validate();
+          });
+        }
+      }
+
+      // Validate this field
+      debouncedValidation && debouncedValidation();
     },
-    [dispatch, debouncedValidation, stageId, fieldId]
+    [client, id, field, debouncedValidation]
   );
 
   return handleChange;

@@ -1,14 +1,17 @@
-import Form from '../core/Form';
-import { FieldProps } from '../core/types';
+import { Client } from '../core/Client';
+import { FieldProps } from '.';
 import { useFieldValue, useFieldActions } from '../hooks';
 
 export interface SelectProps<T> extends FieldProps<T> {
   options: [label: string, value: string][];
 }
 
-export function Select<T>(Form: Form, { id, label, options }: SelectProps<T>) {
-  const { value: selectedValue, isRequired } = useFieldValue(Form, id);
-  const handleChange = useFieldActions(Form, id);
+export function Select<T>(
+  client: Client,
+  { id, label, options }: SelectProps<T>
+) {
+  const { value: selectedValue, isRequired } = useFieldValue(client, id);
+  const handleChange = useFieldActions(client, id);
 
   return (
     <div style={{ marginTop: '1rem' }}>
@@ -16,19 +19,16 @@ export function Select<T>(Form: Form, { id, label, options }: SelectProps<T>) {
         <label htmlFor={id}>
           {label}
           {isRequired && '*'}
-          {/* {isValid ? ' (valid)' : ' (invalid)'} */}
         </label>
       )}
       <div style={{ marginTop: '.3rem' }}>
         <select
-          form={Form.id}
+          form={client.formId}
           id={id}
           defaultValue={selectedValue}
           onChange={handleChange}
         >
-          <option value={undefined} hidden>
-            Select a value...
-          </option>
+          <option value=''>None</option>
           {options.map(([label, value]) => (
             <option key={value} value={value}>
               {label}
