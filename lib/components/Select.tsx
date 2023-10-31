@@ -28,9 +28,7 @@ export function Select<T>(
           defaultValue={selectedValue}
           onChange={handleChange}
         >
-          <option value={undefined} hidden>
-            Select a value...
-          </option>
+          <option value=''>None</option>
           {options.map(([label, value]) => (
             <option key={value} value={value}>
               {label}

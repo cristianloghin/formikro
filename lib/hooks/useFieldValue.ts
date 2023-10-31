@@ -6,6 +6,7 @@ export function useFieldValue(client: Client, fieldId: string) {
   const field = client.getField(fieldId);
   const uid = field?.uid;
   const [value, setValue] = useState<FieldValue>(field?.value);
+  const [isDisabled, setIsDisabled] = useState(field?.isDisabled);
 
   // set up an observer
   const fieldObserver = useCallback(() => {
@@ -14,6 +15,14 @@ export function useFieldValue(client: Client, fieldId: string) {
         return currentValue;
       }
       return field?.value;
+    });
+
+    setIsDisabled((current) => {
+      if (current === field?.isDisabled) {
+        return current;
+      }
+
+      return field?.isDisabled;
     });
   }, [field]);
 
@@ -28,5 +37,6 @@ export function useFieldValue(client: Client, fieldId: string) {
   return {
     value,
     isRequired: field?.isRequired,
+    isDisabled,
   };
 }

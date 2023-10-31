@@ -12,7 +12,7 @@ export type FieldData = {
   isRequired: boolean;
   initialValue: FieldValue | undefined;
   validators?: ((data: Record<string, FieldValue>) => Promise<string>)[];
-  disable?: (data: Record<string, FieldValue>) => boolean;
+  disable?: boolean | ((data: Record<string, FieldValue>) => boolean);
   sideEffects?: FieldSideEffects;
   stage: string | undefined;
 };
@@ -47,6 +47,7 @@ abstract class AbstractField implements FieldType {
     | undefined;
   protected error: string = '';
   protected disable:
+    | boolean
     | ((data: Record<string, FieldValue>) => boolean)
     | undefined;
   protected sideEffects: FieldSideEffects | undefined;
@@ -125,9 +126,11 @@ abstract class AbstractField implements FieldType {
   }
 
   getIsDisabled(): boolean {
-    if (this.disable) {
+    if (this.disable !== undefined) {
       const data = this.getFieldData();
-      return this.disable(data);
+      return typeof this.disable === 'function'
+        ? this.disable(data)
+        : this.disable;
     } else {
       return false;
     }

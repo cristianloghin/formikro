@@ -5,7 +5,7 @@ import { useFieldValue, useFieldActions, useFieldState } from '../hooks';
 export interface InputProps<T> extends FieldProps<T> {}
 
 export function Input<T>(client: Client, { id, label }: FieldProps<T>) {
-  const { value, isRequired } = useFieldValue(client, id);
+  const { value, isRequired, isDisabled } = useFieldValue(client, id);
   const { currentState, error } = useFieldState(client, id);
   const handleInput = useFieldActions(client, id);
 
@@ -24,9 +24,9 @@ export function Input<T>(client: Client, { id, label }: FieldProps<T>) {
           type='text'
           value={value || ''}
           onChange={handleInput}
-          // disabled={isDisabled}
+          disabled={isDisabled}
         />
-        {error && (
+        {!isDisabled && error && (
           <span style={{ color: 'red', fontSize: '.75rem' }}>{error}</span>
         )}
       </div>

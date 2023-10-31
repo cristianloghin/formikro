@@ -88,7 +88,7 @@ export function Playground() {
       },
       type: {
         isRequired: true,
-        initialValue: 'chinos',
+        sideEffects: { clear: ['size'] },
         stage: 'BANG',
       },
       size: {

@@ -23,8 +23,10 @@ export function useFieldActions(client: Client, id: string) {
         if (clear) {
           clear.forEach((id) => {
             const target = client.getField(id);
-            client.dispatch('SET_FIELD_VALUE', { id, value: undefined });
-            target?.validate();
+            if (target?.value) {
+              client.dispatch('SET_FIELD_VALUE', { id, value: undefined });
+              target?.validate();
+            }
           });
         }
 

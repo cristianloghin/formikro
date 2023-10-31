@@ -6,8 +6,8 @@ import { Select, SelectProps } from '../components/Select';
 import { Stage, StageProps } from '../components/Stage';
 
 type SideEffects<K> = {
-  clear: K[];
-  validate: K[];
+  clear?: K[];
+  validate?: K[];
 };
 
 type Validator<T> = (data: T) => Promise<string>;
@@ -15,7 +15,7 @@ type Validator<T> = (data: T) => Promise<string>;
 type FormikroField<T, F extends keyof T, K> = {
   isRequired: boolean;
   validators?: Validator<T>[];
-  disable?: (data: T) => boolean;
+  disable?: boolean | ((data: T) => boolean);
   initialValue?: T[F];
   stage?: K;
   sideEffects?: SideEffects<Exclude<keyof T, F>>;
