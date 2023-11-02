@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
 import { Client } from '../core/Client';
 import { FieldState } from '../core/StateManager';
