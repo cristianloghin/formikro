@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useFormikro, useFormikroClient } from '../lib/main';
+import { Input } from './components/Input';
+import { Select } from './components/Select';
 
 enum TYPES {
   'cargo',
@@ -34,6 +36,7 @@ function delayedOptions() {
         resolve([
           ['Red Color', 'RED_VALUE'],
           ['Blue Color', 'BLUE_VALUE'],
+          ['Pink color', 'pink'],
         ]),
       1000
     );
@@ -123,8 +126,7 @@ export function Playground() {
         initialValue: 30,
       },
       shade: {
-        isRequired: false,
-        initialValue: 'red',
+        isRequired: true,
         validators: [(data) => validateShade(data.maker, data.shade)],
       },
     },
@@ -154,10 +156,24 @@ export function Playground() {
         <div>
           <h2>Bar Form</h2>
           <BarForm>
-            <BarForm.Input id='trousers' label='Trousers' />
-            <BarForm.Input id='maker' label='Maker' />
-            <BarForm.Input id='dimensions' label='Dimensions' />
-            <BarForm.Input id='shade' label='Shade' />
+            <BarForm.Field
+              id='trousers'
+              render={(props) => <Input {...props} label='Trousers' />}
+            />
+            <BarForm.Field
+              id='maker'
+              render={(props) => <Input {...props} label='Maker' />}
+            />
+            <BarForm.Field
+              id='dimensions'
+              render={(props) => <Input {...props} label='Dimensions' />}
+            />
+            <BarForm.Field
+              id='shade'
+              render={(props) => (
+                <Select {...props} label='Shade' options={colorOptions} />
+              )}
+            />
           </BarForm>
           <div
             style={{
@@ -204,15 +220,34 @@ export function Playground() {
           </div>
           <FooForm>
             <FooForm.Stage name='FOO'>
-              <FooForm.Input id='pants' label='Pants' />
-              <FooForm.Input id='brand' label='Brand' />
+              <FooForm.Field
+                id='pants'
+                render={(props) => <Input {...props} label='Pants' />}
+              />
+              <FooForm.Field
+                id='brand'
+                render={(props) => <Input {...props} label='Brand' />}
+              />
             </FooForm.Stage>
             <FooForm.Stage name='BANG'>
-              <FooForm.Select id='type' label='Type' options={typeOptions} />
-              <FooForm.Input id='size' label='Size' />
+              <FooForm.Field
+                id='type'
+                render={(props) => (
+                  <Select {...props} label='Type' options={typeOptions} />
+                )}
+              />
+              <FooForm.Field
+                id='size'
+                render={(props) => <Input {...props} label='Size' />}
+              />
             </FooForm.Stage>
             <FooForm.Stage name='BAR'>
-              <FooForm.Select id='color' label='Color' options={colorOptions} />
+              <FooForm.Field
+                id='color'
+                render={(props) => (
+                  <Select {...props} label='Color' options={colorOptions} />
+                )}
+              />
             </FooForm.Stage>
           </FooForm>
         </div>

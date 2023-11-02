@@ -1,4 +1,2 @@
-export interface FieldProps<T> {
-  id: Extract<keyof T, string>;
-  label?: string;
-}
+// import { FieldState } from '../core/StateManager';
+// import { FieldValue } from '../main';

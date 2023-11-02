@@ -1,7 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { Client } from '../core/Client';
-
-type Elements = HTMLInputElement | HTMLSelectElement;
+import { FieldValue } from '../main';
 
 export function useFieldActions(client: Client, id: string) {
   const field = client.getField(id);
@@ -12,10 +11,10 @@ export function useFieldActions(client: Client, id: string) {
   }, [validate]);
 
   const handleChange = useCallback(
-    (e: React.ChangeEvent<Elements>) => {
+    (value: FieldValue) => {
       client.dispatch('SET_FIELD_VALUE', {
         id,
-        value: e.target.value,
+        value,
       });
 
       if (field?.sideEffects) {
