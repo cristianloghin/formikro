@@ -4,7 +4,7 @@ import { FieldState } from '../core/StateManager';
 import { useFieldValue, useFieldActions, useFieldState } from '../hooks';
 import { FieldValue } from '../main';
 
-export interface DefaultProps {
+export interface DefaultFieldProps {
   id: string;
   formId: string;
   isRequired?: boolean;
@@ -17,7 +17,7 @@ export interface DefaultProps {
 
 export interface FieldProps<
   T,
-  K extends React.FC<DefaultProps> = React.FC<DefaultProps>
+  K extends React.FC<DefaultFieldProps> = React.FC<DefaultFieldProps>
 > {
   id: Extract<keyof T, string>;
   render: K;

@@ -1,6 +1,6 @@
-import { DefaultProps } from '../../lib/components/Field';
+import { DefaultFieldProps } from '../../lib/main';
 
-export interface SelectProps extends DefaultProps {
+export interface SelectProps extends DefaultFieldProps {
   label?: string;
   options: [label: string, value: string][];
 }

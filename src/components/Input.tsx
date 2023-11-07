@@ -1,6 +1,6 @@
-import { DefaultProps } from '../../lib/components/Field';
+import { DefaultFieldProps } from '../../lib/main';
 
-export interface InputProps extends DefaultProps {
+export interface InputProps extends DefaultFieldProps {
   label?: string;
 }
 
