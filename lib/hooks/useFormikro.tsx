@@ -1,9 +1,9 @@
 import { useCallback } from 'react';
 import Global from '../core/Global';
 import { FieldValue } from '../core/Field';
-import { Input, InputProps } from '../components/Input';
-import { Select, SelectProps } from '../components/Select';
 import { Stage, StageProps } from '../components/Stage';
+import { FieldProps } from '../components/Field';
+import { Field } from '../components/Field';
 
 type SideEffects<K> = {
   clear?: K[];
@@ -30,8 +30,7 @@ export type FormikroOptions<T, K extends string> = {
 };
 
 export interface FormikroForm<T, K> extends React.FC<React.PropsWithChildren> {
-  Input: React.FC<InputProps<T>>;
-  Select: React.FC<SelectProps<T>>;
+  Field: React.FC<FieldProps<T>>;
   Stage: React.FC<StageProps<K>>;
 }
 
@@ -54,16 +53,12 @@ export function useFormikro<
 
   const ComposedForm = DynamicForm as FormikroForm<T, K>;
 
-  ComposedForm.Input = useCallback(
-    (props) => Input(clientInstance, props),
+  ComposedForm.Field = useCallback(
+    (props) => Field(clientInstance, props),
     [clientInstance]
   );
   ComposedForm.Stage = useCallback(
     (props) => Stage(clientInstance, props),
-    [clientInstance]
-  );
-  ComposedForm.Select = useCallback(
-    (props) => Select(clientInstance, props),
     [clientInstance]
   );
 
