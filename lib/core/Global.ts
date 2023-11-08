@@ -2,6 +2,7 @@
 import { Form, BasicForm, MultistageForm } from './Form';
 import { Client } from './Client';
 import { FormikroOptions } from '../hooks/useFormikro';
+import { FieldValue } from 'react-formikro';
 
 class Global {
   private static instance: Global;
@@ -22,10 +23,25 @@ class Global {
 
     if (!formInstance) {
       if (!options.stages) {
-        formInstance = new Form(new BasicForm(formId, options.fields));
+        formInstance = new Form(
+          new BasicForm(
+            formId,
+            options.onSubmit as (
+              fields: Record<string, FieldValue>
+            ) => Promise<unknown>,
+            options.fields
+          )
+        );
       } else {
         formInstance = new Form(
-          new MultistageForm(formId, options.fields, options.stages)
+          new MultistageForm(
+            formId,
+            options.onSubmit as (
+              fields: Record<string, FieldValue>
+            ) => Promise<unknown>,
+            options.fields,
+            options.stages
+          )
         );
       }
       this.forms.set(formId, formInstance);

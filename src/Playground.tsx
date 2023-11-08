@@ -26,7 +26,7 @@ type BarForm = {
   trousers: string;
   maker: string;
   dimensions: number;
-  shade: 'red' | 'blue';
+  shade: 'red' | 'blue' | 'pink';
 };
 
 function delayedOptions() {
@@ -34,8 +34,8 @@ function delayedOptions() {
     setTimeout(
       () =>
         resolve([
-          ['Red Color', 'RED_VALUE'],
-          ['Blue Color', 'BLUE_VALUE'],
+          ['Red Color', 'red'],
+          ['Blue Color', 'blue'],
           ['Pink color', 'pink'],
         ]),
       1000
@@ -45,15 +45,23 @@ function delayedOptions() {
 
 function saveFoo(data: FooForm) {
   return new Promise<void>((resolve) => {
-    console.log('Saved Foo!!!', data);
-    resolve();
+    setTimeout(() => {
+      console.log('Saved Foo!!!', data);
+      resolve();
+    }, 2000);
   });
 }
 
 function saveBar(data: BarForm) {
-  return new Promise<void>((resolve) => {
-    console.log('Saved Foo!!!', data);
-    resolve();
+  return new Promise<void>((resolve, reject) => {
+    setTimeout(() => {
+      if (data.shade === 'red') {
+        console.log('Saved BARRRR!!!', data);
+        resolve();
+      } else {
+        reject('Something went wrong');
+      }
+    }, 2000);
   });
 }
 
@@ -133,14 +141,12 @@ export function Playground() {
   });
 
   const {
-    isSubmittable: barSubmittable,
-    // controller: barController,
-  } = useFormikroClient('BarForm');
-  const {
-    isSubmittable: fooSubmittable,
-    stage,
-    controller: fooController,
-  } = useFormikroClient('FooForm');
+    state: barState,
+    // fields: barFields,
+    controller: barController,
+  } = useFormikroClient<BarForm>('BarForm');
+  const { state: fooState, controller: fooController } =
+    useFormikroClient('FooForm');
 
   return (
     <>
@@ -155,6 +161,11 @@ export function Playground() {
       >
         <div>
           <h2>Bar Form</h2>
+          <p>
+            {barState.isSubmitting && 'SUBMITTING'}
+            {barState.success && 'SUCCESS'}
+            {barState.error && 'ERROR'}
+          </p>
           <BarForm>
             <BarForm.Field
               id='trousers'
@@ -185,7 +196,17 @@ export function Playground() {
             }}
           >
             <button disabled>Reset</button>
-            <button disabled={!barSubmittable}>Submit</button>
+            <button
+              disabled={!barState.isSubmittable}
+              onClick={() =>
+                barController
+                  .submit()
+                  .then(() => console.log('YEEEEEE'))
+                  .catch((error) => console.log(error))
+              }
+            >
+              Submit
+            </button>
           </div>
         </div>
         <div>
@@ -201,21 +222,21 @@ export function Playground() {
             <button disabled>Reset</button>
             <button
               onClick={fooController.previousStage}
-              disabled={!stage.canGoToPrevious}
+              disabled={!fooState.stage.canGoToPrevious}
             >
               Previous
             </button>
             <button
               onClick={fooController.nextStage}
-              disabled={!stage.canGoToNext}
+              disabled={!fooState.stage.canGoToNext}
             >
               Next
             </button>
             <button
-              // onClick={fooController.submit}
-              disabled={!fooSubmittable}
+              onClick={fooController.submit}
+              disabled={!fooState.isSubmittable}
             >
-              Submit
+              {fooState.isSubmitting ? 'Submitting...' : 'Submit'}
             </button>
           </div>
           <FooForm>

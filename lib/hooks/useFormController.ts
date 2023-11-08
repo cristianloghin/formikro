@@ -3,7 +3,7 @@ import { Client } from '../core/Client';
 
 export function useFormController(client: Client) {
   const submit = useCallback(() => {
-    console.log('Submit', client.formId);
+    return client.submitForm();
   }, [client]);
 
   const nextStage = useCallback(() => {

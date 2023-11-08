@@ -23,7 +23,9 @@ export interface Stageable {
 
 export interface FormType {
   getField(id: string): Field | null;
+  getFields(): Record<string, FieldValue>;
   getFormId(): string;
+  submitForm(): Promise<void>;
   getFormState(): FormState;
   subscribe(action: ActionKey, observer: FormObserver, uid: string): void;
   unsubscribe(action: ActionKey, uid: string): void;
@@ -38,7 +40,13 @@ abstract class AbstractForm implements FormType {
   protected worker = new Worker();
   protected stateManager = new StateManager('FORM');
 
-  constructor(id: string, fields: Record<string, unknown>) {
+  constructor(
+    id: string,
+    protected onSubmit: (
+      fields: Record<string, FieldValue>
+    ) => Promise<unknown>,
+    fields: Record<string, unknown>
+  ) {
     this.id = id;
     this.currentState = FormState.NOT_SUBMITTABLE;
     this.dispatch = this.dispatch.bind(this);
@@ -62,6 +70,31 @@ abstract class AbstractForm implements FormType {
 
   getField(id: string): Field | null {
     return this.fields.get(id) || null;
+  }
+
+  getFields(): Record<string, FieldValue> {
+    const fields: Record<string, FieldValue> = {};
+
+    this.fields.forEach((field, key) => {
+      fields[key] = field.value;
+    });
+
+    return fields;
+  }
+
+  async submitForm(): Promise<void> {
+    const fields = this.getFields();
+    this.goToState(FormState.SUBMITTING);
+
+    return this.onSubmit(fields)
+      .then(() => {
+        this.goToState(FormState.SUCCESS);
+        return;
+      })
+      .catch((error) => {
+        this.goToState(FormState.ERROR);
+        throw error;
+      });
   }
 
   getFieldData(): Record<string, FieldValue> {
@@ -149,10 +182,11 @@ export class MultistageForm extends AbstractForm implements Stageable {
 
   constructor(
     formId: string,
+    onSubmit: (fields: Record<string, FieldValue>) => Promise<unknown>,
     fields: Record<string, unknown>,
     stages: string[]
   ) {
-    super(formId, fields);
+    super(formId, onSubmit, fields);
 
     this.stageFieldsValid = this.stageFieldsValid.bind(this);
     this.validateStages = this.validateStages.bind(this);

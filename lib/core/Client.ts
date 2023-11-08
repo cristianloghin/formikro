@@ -4,12 +4,21 @@ import { Stage } from './Stage';
 import { FormObserver } from './EventBus';
 import { ActionKey, ActionPayload } from './Actions';
 import { StageState } from './StateManager';
+import { FieldValue } from 'react-formikro';
 
 export class Client {
   constructor(private formType: FormType & Partial<Stageable>) {}
 
   getField(id: string): Field | null {
     return this.formType.getField(id);
+  }
+
+  get fields(): Record<string, FieldValue> {
+    return this.formType.getFields();
+  }
+
+  async submitForm(): Promise<void> {
+    return this.formType.submitForm();
   }
 
   getStage(id: string): Stage | null {
