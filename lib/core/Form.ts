@@ -2,7 +2,7 @@ import { ActionData, ActionKey, ActionPayload } from './Actions';
 import { Client } from './Client';
 import { Command } from './Command';
 import { Worker } from './Worker';
-import { EventBus, FormObserver } from './EventBus';
+import { EventBus, FormEvent, FormObserver } from './EventBus';
 import { BasicField, Field, FieldData, FieldValue, StageField } from './Field';
 import { Stage } from './Stage';
 import { FieldState, FormState, StateManager } from './StateManager';
@@ -30,10 +30,10 @@ export interface FormType {
   subscribe(action: ActionKey, observer: FormObserver, uid: string): void;
   unsubscribe(action: ActionKey, uid: string): void;
   dispatch: FormDispatch;
+  handleUpdates(event: FormEvent): void;
 }
 
 abstract class AbstractForm implements FormType {
-  protected id: string;
   protected currentState: FormState;
   protected fields = new Map<string, Field>();
   protected eventBus = new EventBus();
@@ -47,7 +47,6 @@ abstract class AbstractForm implements FormType {
     ) => Promise<unknown>,
     fields: Record<string, unknown>
   ) {
-    this.id = id;
     this.currentState = FormState.NOT_SUBMITTABLE;
     this.dispatch = this.dispatch.bind(this);
     this.validate = this.validate.bind(this);
@@ -58,6 +57,8 @@ abstract class AbstractForm implements FormType {
       this.fields.set(name, fieldInstance);
     });
   }
+
+  abstract handleUpdates(event: FormEvent): void;
 
   abstract dispatch(
     action: ActionKey,
@@ -107,10 +108,6 @@ abstract class AbstractForm implements FormType {
     return result;
   }
 
-  getFormId(): string {
-    return this.id;
-  }
-
   getFormState(): FormState {
     return this.currentState;
   }
@@ -148,6 +145,9 @@ export class BasicForm extends AbstractForm {
   }
 
   // Specific implementations
+  handleUpdates(event: FormEvent): void {
+    console.log(event);
+  }
 
   copyData(): ActionData {
     return { currentState: this.currentState, fields: this.fields };
@@ -212,6 +212,9 @@ export class MultistageForm extends AbstractForm implements Stageable {
     return fieldInstance;
   }
   // Specific implementations
+  handleUpdates(event: FormEvent): void {
+    console.log(event);
+  }
 
   copyData(): ActionData {
     return {
@@ -293,13 +296,11 @@ export class MultistageForm extends AbstractForm implements Stageable {
 }
 
 export class Form {
-  private client: Client;
-
-  constructor(private type: FormType & Partial<Stageable>) {
-    this.client = new Client(this.type);
-  }
-
-  getClient() {
-    return this.client;
+  constructor(
+    private formId: string,
+    private type: FormType & Partial<Stageable>,
+    private eventBus: EventBus
+  ) {
+    this.eventBus.subscribe(this.formId, this.type.handleUpdates);
   }
 }

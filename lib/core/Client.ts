@@ -1,13 +1,19 @@
 import { FormType, Stageable } from './Form';
 import { Field } from './Field';
 import { Stage } from './Stage';
-import { FormObserver } from './EventBus';
 import { ActionKey, ActionPayload } from './Actions';
 import { StageState } from './StateManager';
 import { FieldValue } from 'react-formikro';
+import { EventBus, FormEvent } from './EventBus';
 
 export class Client {
-  constructor(private formType: FormType & Partial<Stageable>) {}
+  constructor(private formId: string, private eventBus: EventBus) {
+    this.eventBus.subscribe(this.formId, this.handleUpdates);
+  }
+
+  private handleUpdates(event: FormEvent) {
+    console.log(event);
+  }
 
   getField(id: string): Field | null {
     return this.formType.getField(id);
@@ -59,10 +65,6 @@ export class Client {
     } else {
       return null;
     }
-  }
-
-  get formId() {
-    return this.formType.getFormId();
   }
 
   get formState() {

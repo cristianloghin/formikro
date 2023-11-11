@@ -1,35 +1,37 @@
-import { ActionKey } from './Actions';
+type ActionType = 'FOO' | 'BAR';
+type ActionPayload = { foo: string };
 
-export type FormObserver = () => void;
+export type FormEvent = {
+  action: ActionType;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  payload: ActionPayload;
+};
+type Observer = (event: FormEvent) => void;
 
-// A centralized EventBus that both mutates state and notifies observers
 export class EventBus {
-  private observers = new Map<string, Map<string, FormObserver>>();
+  private observers = new Map<string, Set<Observer>>();
 
-  subscribe(action: ActionKey, observer: FormObserver, uid: string) {
-    if (!this.observers.has(action)) {
-      const observerMap = new Map<string, FormObserver>();
-      observerMap.set(uid, observer);
-      this.observers.set(action, observerMap);
-    } else {
-      this.observers.get(action)?.set(uid, observer);
+  subscribe(formId: string, observer: Observer) {
+    if (!this.observers.has(formId)) {
+      this.observers.set(formId, new Set());
+    }
+    this.observers.get(formId)!.add(observer);
+  }
+
+  unsubscribe(formId: string, observer: Observer) {
+    this.observers.get(formId)!.delete(observer);
+
+    if (this.observers.get(formId)?.size === 0) {
+      this.observers.delete(formId);
     }
   }
 
-  unsubscribe(action: ActionKey, uid: string) {
-    this.observers.get(action)?.delete(uid);
-    if (this.observers.get(action)?.size === 0) {
-      this.observers.delete(action);
-    }
-  }
-
-  publish(action: ActionKey, uid?: string) {
-    if (uid) {
-      const observer = this.observers.get(action)?.get(uid);
-      if (observer) observer();
-    } else {
-      const observers = this.observers.get(action);
-      if (observers) observers.forEach((observer) => observer());
+  publish(formId: string, event: FormEvent) {
+    try {
+      const targetObservers = this.observers.get(formId);
+      targetObservers?.forEach((observer) => observer(event));
+    } catch (error) {
+      console.error(`Error occurred while publishing event: ${error}`);
     }
   }
 }

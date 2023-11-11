@@ -13,3 +13,4 @@ export { useFormController } from './useFormController';
 
 export { useFormikro } from './useFormikro';
 export { useFormikroClient } from './useFormikroClient';
+export { useFreeClient } from './useFreeClient';
