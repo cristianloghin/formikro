@@ -1,4 +1,4 @@
-import { Client } from '../core/Client';
+import Global from '../core/Global';
 import { useStage } from '../hooks';
 
 export interface StageProps<T> {
@@ -6,8 +6,9 @@ export interface StageProps<T> {
   children: React.ReactNode;
 }
 
-export function Stage<T extends string>(client: Client, props: StageProps<T>) {
+export function Stage<T extends string>(formId: string, props: StageProps<T>) {
   const { name, children } = props;
+  const client = Global.getClient(formId);
   const { isComplete, isActive } = useStage(client, name);
 
   return (

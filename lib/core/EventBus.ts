@@ -1,5 +1,10 @@
-type ActionType = 'FOO' | 'BAR';
-type ActionPayload = { foo: string };
+import { Field, FieldValue } from './Field';
+
+type ActionType = 'FIELD_UPDATED' | 'SET_FIELD_VALUE';
+type ActionPayload = { fieldId: string; value: FieldValue } & {
+  fieldId: string;
+  field: Field;
+};
 
 export type FormEvent = {
   action: ActionType;

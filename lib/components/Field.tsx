@@ -1,5 +1,5 @@
 import React from 'react';
-import { Client } from '../core/Client';
+import Global from '../core/Global';
 import { FieldState } from '../core/StateManager';
 import { useFieldValue, useFieldActions, useFieldState } from '../hooks';
 import { FieldValue } from '../main';
@@ -23,15 +23,16 @@ export interface FieldProps<
   render: K;
 }
 
-export function Field<T>(client: Client, props: FieldProps<T>) {
+export function Field<T>(formId: string, props: FieldProps<T>) {
   const { id } = props;
+  const client = Global.getClient(formId);
   const { value, isRequired, isDisabled } = useFieldValue(client, id);
   const { currentState, error } = useFieldState(client, id);
   const handleChange = useFieldActions(client, id);
 
   return props.render({
     id,
-    formId: client.formId,
+    formId,
     isRequired,
     isDisabled,
     value,

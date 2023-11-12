@@ -1,18 +1,36 @@
-import { FormType, Stageable } from './Form';
 import { Field } from './Field';
 import { Stage } from './Stage';
-import { ActionKey, ActionPayload } from './Actions';
 import { StageState } from './StateManager';
 import { FieldValue } from 'react-formikro';
 import { EventBus, FormEvent } from './EventBus';
 
 export class Client {
+  private observers = new Map<string, (field: Field) => void>();
+
   constructor(private formId: string, private eventBus: EventBus) {
     this.eventBus.subscribe(this.formId, this.handleUpdates);
   }
 
   private handleUpdates(event: FormEvent) {
-    console.log(event);
+    switch (event.action) {
+      case 'FIELD_UPDATED': {
+        const { fieldId, field } = event.payload;
+        if (this.observers.has(fieldId)) {
+          const fieldObserver = this.observers.get(fieldId)!;
+          fieldObserver(field);
+        }
+      }
+    }
+  }
+
+  dispatchEvent(event: FormEvent) {
+    this.eventBus.publish(this.formId, event);
+  }
+
+  subscribe(fieldId: string, observer: (field: Field) => void) {
+    this.observers.set(fieldId, observer);
+    // unsubscribe
+    return () => this.observers.delete(fieldId);
   }
 
   getField(id: string): Field | null {
@@ -69,21 +87,5 @@ export class Client {
 
   get formState() {
     return this.formType.getFormState();
-  }
-
-  subscribe(action: ActionKey, observer: FormObserver, uid: string) {
-    return this.formType.subscribe(action, observer, uid);
-  }
-
-  unsubscribe(action: ActionKey, uid: string) {
-    return this.formType.unsubscribe(action, uid);
-  }
-
-  dispatch(
-    action: ActionKey,
-    payload: ActionPayload<ActionKey>,
-    observerId?: string
-  ) {
-    return this.formType.dispatch(action, payload, observerId);
   }
 }

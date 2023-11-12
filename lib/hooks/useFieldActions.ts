@@ -2,8 +2,7 @@ import { useCallback, useMemo } from 'react';
 import { Client } from '../core/Client';
 import { FieldValue } from '../main';
 
-export function useFieldActions(client: Client, id: string) {
-  const field = client.getField(id);
+export function useFieldActions(client: Client, fieldId: string) {
   const validate = field?.validate;
 
   const debouncedValidation = useMemo(() => {
@@ -12,9 +11,12 @@ export function useFieldActions(client: Client, id: string) {
 
   const handleChange = useCallback(
     (value: FieldValue) => {
-      client.dispatch('SET_FIELD_VALUE', {
-        id,
-        value,
+      client.dispatchEvent({
+        action: 'SET_FIELD_VALUE',
+        payload: {
+          fieldId,
+          value,
+        },
       });
 
       if (field?.sideEffects) {
@@ -23,7 +25,10 @@ export function useFieldActions(client: Client, id: string) {
           clear.forEach((id) => {
             const target = client.getField(id);
             if (target?.value) {
-              client.dispatch('SET_FIELD_VALUE', { id, value: undefined });
+              client.dispatchEvent({
+                action: 'SET_FIELD_VALUE',
+                payload: { fieldId: id, value: undefined },
+              });
               target?.validate();
             }
           });
@@ -40,7 +45,7 @@ export function useFieldActions(client: Client, id: string) {
       // Validate this field
       debouncedValidation && debouncedValidation();
     },
-    [client, id, field, debouncedValidation]
+    [client, fieldId, field, debouncedValidation]
   );
 
   return handleChange;

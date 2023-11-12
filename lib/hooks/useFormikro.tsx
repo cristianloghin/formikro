@@ -38,7 +38,7 @@ export function useFormikro<
   T extends Record<string, FieldValue>,
   K extends string = never
 >(formId: string, options: FormikroOptions<T, K>) {
-  const clientInstance = Global.initialize<T, K>(formId, options);
+  Global.initialize<T, K>(formId, options);
 
   const DynamicForm = useCallback<React.FC<React.PropsWithChildren>>(
     ({ children }) => {
@@ -53,14 +53,8 @@ export function useFormikro<
 
   const ComposedForm = DynamicForm as FormikroForm<T, K>;
 
-  ComposedForm.Field = useCallback(
-    (props) => Field(clientInstance, props),
-    [clientInstance]
-  );
-  ComposedForm.Stage = useCallback(
-    (props) => Stage(clientInstance, props),
-    [clientInstance]
-  );
+  ComposedForm.Field = useCallback((props) => Field(formId, props), [formId]);
+  ComposedForm.Stage = useCallback((props) => Stage(formId, props), [formId]);
 
   return ComposedForm;
 }
