@@ -1,23 +1,16 @@
+import { useCallback } from 'react';
 import Global from '../core/Global';
-import { useFormState, useFormController, useFormStage } from '.';
-import { FieldValue } from '../core/Field';
 
-function useFormikroClient<T extends Record<string, FieldValue>>(
-  formName: string
-) {
-  const form = Global.getForm(formName);
-  const client = form.getClient();
+function useFormikroClient(formName: string) {
+  const client = Global.getClient(formName);
 
-  const state = useFormState(client);
-  const stage = useFormStage(client);
+  const submitForm = useCallback(() => {
+    client.dispatchEvent({
+      action: 'SUBMIT_FORM',
+    });
+  }, [client]);
 
-  const controller = useFormController(client);
-
-  const fields = client.fields as T;
-
-  // return { data, state, controller }
-
-  return { state: { ...state, stage }, controller, fields };
+  return { submit: submitForm };
 }
 
 export { useFormikroClient };

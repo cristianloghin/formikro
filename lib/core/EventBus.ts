@@ -1,16 +1,19 @@
-import { Field, FieldValue } from './Field';
+import { FieldData, FieldValue } from './Field';
 
-type ActionType = 'FIELD_UPDATED' | 'SET_FIELD_VALUE';
-type ActionPayload = { fieldId: string; value: FieldValue } & {
-  fieldId: string;
-  field: Field;
-};
+export type FormEvent =
+  | {
+      action: 'FIELD_UPDATED' | 'FIELD_INITIALIZED';
+      fieldId: string;
+      fieldData: FieldData;
+    }
+  | {
+      action: 'UPDATE_FIELD';
+      fieldId: string;
+      value: FieldValue;
+    }
+  | { action: 'INITIALIZE_FIELD'; fieldId: string }
+  | { action: 'SUBMIT_FORM' };
 
-export type FormEvent = {
-  action: ActionType;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  payload: ActionPayload;
-};
 type Observer = (event: FormEvent) => void;
 
 export class EventBus {
@@ -33,6 +36,7 @@ export class EventBus {
 
   publish(formId: string, event: FormEvent) {
     try {
+      console.log('📣', event);
       const targetObservers = this.observers.get(formId);
       targetObservers?.forEach((observer) => observer(event));
     } catch (error) {

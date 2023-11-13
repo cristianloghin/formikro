@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { Form, BasicForm, MultistageForm } from './Form';
+import { InitialFormOptions, Form, BasicForm, FormType } from './Form';
 import { Client } from './Client';
 import { FormikroOptions } from '../hooks/useFormikro';
 import { EventBus } from './EventBus';
@@ -17,53 +16,50 @@ class Global {
     return Global.instance;
   }
 
-  initialize<T, K extends string>(
-    formId: string,
-    options: FormikroOptions<T, K>
-  ) {
-    if (!this.forms.has(formId)) {
-      let formInstance: Form;
+  initialize<T>(formId: string, options: FormikroOptions<T>) {
+    if (!this.forms.has(formId) || this.forms.get(formId)?.isProxy) {
+      const formInstance = new Form(
+        new BasicForm(formId, options as InitialFormOptions, this.eventBus)
+      );
 
-      if (!options.stages) {
-        formInstance = new Form(formId, new BasicForm(options), this.eventBus);
-      } else {
-        formInstance = new Form(
-          formId,
-          new MultistageForm(options),
-          this.eventBus
-        );
-      }
       this.forms.set(formId, formInstance);
     }
   }
 
+  getForm(formId: string): FormType | undefined {
+    return this.forms.get(formId)?.type;
+  }
+
   getClient(formId: string): Client {
+    // Create FormProxy if client created before form
     if (!this.forms.has(formId)) {
-      // Create a form Proxy
-      const formProxyHandler = {
-        get: (target: any, prop: string) => {
-          // Handle property access on the proxy
-          return target[prop];
-        },
-
-        set: (target: any, prop: string, value: any) => {
-          // Handle setting properties on the proxy
-          target[prop] = value;
-          return true;
-        },
-      };
-      const emptyForm = {} as Form;
-      const formProxy = new Proxy(emptyForm, formProxyHandler);
-
+      const formProxy = this.getFormProxy();
       this.forms.set(formId, formProxy);
     }
 
+    // Create a form client
     if (!this.clients.has(formId)) {
-      // Create a form client
       this.clients.set(formId, new Client(formId, this.eventBus));
     }
 
     return this.clients.get(formId)!;
+  }
+
+  private getFormProxy(): Form {
+    const formProxyHandler = {
+      get: (target: Form, prop: keyof Form) => {
+        // Handle property access on the proxy
+        return target[prop];
+      },
+
+      set: (target: Form, prop: keyof Form, value: boolean & FormType) => {
+        // Handle setting properties on the proxy
+        target[prop] = value;
+        return true;
+      },
+    };
+    const emptyForm = { isProxy: true } as unknown as Form;
+    return new Proxy(emptyForm, formProxyHandler);
   }
 }
 

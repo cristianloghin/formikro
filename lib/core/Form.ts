@@ -1,17 +1,15 @@
-import { ActionData, ActionKey, ActionPayload } from './Actions';
-import { Command } from './Command';
-import { Worker } from './Worker';
 import { EventBus, FormEvent } from './EventBus';
-import { BasicField, Field, FieldData, FieldValue, StageField } from './Field';
+import {
+  BasicField,
+  Field,
+  InitialFieldData,
+  FieldValue,
+  FieldData,
+} from './Field';
 import { Stage } from './Stage';
 import { FieldState, FormState, StateManager } from './StateManager';
-import { StageManager } from './StageManager';
 
-export type FormDispatch = (
-  action: ActionKey,
-  payload: ActionPayload<ActionKey>,
-  observerId?: string
-) => void;
+export type FormDispatch = (event: FormEvent) => void;
 
 export interface Stageable {
   getStage(id: string): Stage | null;
@@ -20,56 +18,98 @@ export interface Stageable {
   goToStage(target: 'next' | 'previous'): void;
 }
 
+export type InitialFormOptions = {
+  onSubmit: (fields: Record<string, FieldValue>) => Promise<unknown>;
+  fields: Record<string, unknown>;
+  stages?: string[];
+};
+
 export interface FormType {
-  getField(id: string): Field | null;
+  getFieldData(id: string): FieldData | undefined;
   getFields(): Record<string, FieldValue>;
-  getFormId(): string;
   submitForm(): Promise<void>;
   getFormState(): FormState;
-  subscribe(action: ActionKey, observer: FormObserver, uid: string): void;
-  unsubscribe(action: ActionKey, uid: string): void;
-  dispatch: FormDispatch;
   handleUpdates(event: FormEvent): void;
 }
 
 abstract class AbstractForm implements FormType {
   protected currentState: FormState;
   protected fields = new Map<string, Field>();
-  protected eventBus = new EventBus();
-  protected worker = new Worker();
   protected stateManager = new StateManager('FORM');
+  protected onSubmit: (fields: Record<string, FieldValue>) => Promise<unknown>;
 
   constructor(
-    id: string,
-    protected onSubmit: (
-      fields: Record<string, FieldValue>
-    ) => Promise<unknown>,
-    fields: Record<string, unknown>
+    protected formId: string,
+    options: InitialFormOptions,
+    protected eventBus: EventBus
   ) {
     this.currentState = FormState.NOT_SUBMITTABLE;
-    this.dispatch = this.dispatch.bind(this);
+    this.handleUpdates = this.handleUpdates.bind(this);
     this.validate = this.validate.bind(this);
     this.getFieldData = this.getFieldData.bind(this);
+    this.onSubmit = options.onSubmit;
 
-    Object.entries(fields).forEach(([name, value]) => {
-      const fieldInstance = this.createField(name, value);
-      this.fields.set(name, fieldInstance);
+    // Create fields
+    Object.entries(options.fields).forEach(([fieldName, fieldData]) => {
+      const fieldInstance = this.createField(fieldName, fieldData);
+      this.fields.set(fieldName, fieldInstance);
     });
+
+    this.eventBus.subscribe(this.formId, this.handleUpdates);
   }
 
-  abstract handleUpdates(event: FormEvent): void;
+  handleUpdates(event: FormEvent): void {
+    switch (event.action) {
+      case 'INITIALIZE_FIELD': {
+        const { fieldId } = event;
+        const field = this.fields.get(fieldId);
+        if (field) {
+          this.eventBus.publish(this.formId, {
+            action: 'FIELD_INITIALIZED',
+            fieldId,
+            fieldData: field.data,
+          });
+        }
+        break;
+      }
+      case 'UPDATE_FIELD': {
+        const { fieldId, value } = event;
+        const field = this.fields.get(fieldId);
 
-  abstract dispatch(
-    action: ActionKey,
-    payload: ActionPayload<ActionKey>,
-    observerId?: string
-  ): void;
-  protected abstract createField(id: string, data: unknown): Field;
+        if (field) {
+          // validate field -> update state
+          field.update(value);
+
+          this.eventBus.publish(this.formId, {
+            action: 'FIELD_UPDATED',
+            fieldId,
+            fieldData: field.data,
+          });
+
+          // run side effects -> publish events
+        }
+        break;
+      }
+      case 'SUBMIT_FORM': {
+        this.submitForm();
+        break;
+      }
+    }
+  }
+
+  protected abstract createField(fieldName: string, fieldData: unknown): Field;
   abstract validate(): void;
-  abstract copyData(): ActionData;
 
-  getField(id: string): Field | null {
-    return this.fields.get(id) || null;
+  protected dispatchEvent(event: FormEvent): void {
+    this.eventBus.publish(this.formId, event);
+  }
+
+  getFieldData(id: string): FieldData | undefined {
+    const field = this.fields.get(id);
+    if (field) {
+      return field.data;
+    }
+    return undefined;
   }
 
   getFields(): Record<string, FieldValue> {
@@ -97,7 +137,7 @@ abstract class AbstractForm implements FormType {
       });
   }
 
-  getFieldData(): Record<string, FieldValue> {
+  getFieldsData(): Record<string, FieldValue> {
     const result: Record<string, FieldValue> = {};
 
     this.fields.forEach((field, key) => {
@@ -111,14 +151,6 @@ abstract class AbstractForm implements FormType {
     return this.currentState;
   }
 
-  subscribe(action: ActionKey, observer: FormObserver, uid: string): void {
-    this.eventBus.subscribe(action, observer, uid);
-  }
-
-  unsubscribe(action: ActionKey, uid: string): void {
-    this.eventBus.unsubscribe(action, uid);
-  }
-
   protected allFieldsValid() {
     const results: boolean[] = [];
     this.fields.forEach((field) => {
@@ -130,26 +162,23 @@ abstract class AbstractForm implements FormType {
 
   protected goToState(state: FormState) {
     if (this.stateManager.canTransitionTo(this.currentState, state)) {
-      this.dispatch('SET_FORM_STATE', { state });
+      // this.dispatch('SET_FORM_STATE', { state });
     }
   }
 }
 
 export class BasicForm extends AbstractForm {
-  protected createField(id: string, data: FieldData): Field {
+  protected createField(fieldName: string, fieldData: InitialFieldData): Field {
     const fieldInstance = new Field(
-      new BasicField(id, data, this.dispatch, this.validate, this.getFieldData)
+      new BasicField(
+        fieldName,
+        fieldData,
+        this.dispatchEvent,
+        this.validate,
+        this.getFieldsData
+      )
     );
     return fieldInstance;
-  }
-
-  // Specific implementations
-  handleUpdates(event: FormEvent): void {
-    console.log(event);
-  }
-
-  copyData(): ActionData {
-    return { currentState: this.currentState, fields: this.fields };
   }
 
   validate() {
@@ -158,148 +187,15 @@ export class BasicForm extends AbstractForm {
     } else {
       this.goToState(FormState.NOT_SUBMITTABLE);
     }
-  }
-
-  dispatch(
-    action: ActionKey,
-    payload: ActionPayload<ActionKey>,
-    observerId?: string
-  ) {
-    const command = new Command(this.worker, action, payload, this.copyData());
-
-    const result = command.execute();
-    this.fields = result.fields;
-    this.currentState = result.currentState;
-
-    this.eventBus.publish(action, observerId);
-  }
-}
-
-export class MultistageForm extends AbstractForm implements Stageable {
-  stages = new Map<string, Stage>();
-  private stageManager: StageManager;
-
-  constructor(
-    formId: string,
-    onSubmit: (fields: Record<string, FieldValue>) => Promise<unknown>,
-    fields: Record<string, unknown>,
-    stages: string[]
-  ) {
-    super(formId, onSubmit, fields);
-
-    this.stageFieldsValid = this.stageFieldsValid.bind(this);
-    this.validateStages = this.validateStages.bind(this);
-    this.stageManager = new StageManager(stages, this.dispatch);
-
-    stages.forEach((stage, index) => {
-      const StageInstance = new Stage(
-        formId,
-        stage,
-        index,
-        this.stageFieldsValid,
-        this.dispatch
-      );
-      this.stages.set(stage, StageInstance);
-    });
-  }
-
-  protected createField(id: string, data: FieldData): Field {
-    const fieldInstance = new Field(
-      new StageField(id, data, this.dispatch, this.validate, this.getFieldData)
-    );
-
-    return fieldInstance;
-  }
-  // Specific implementations
-  handleUpdates(event: FormEvent): void {
-    console.log(event);
-  }
-
-  copyData(): ActionData {
-    return {
-      currentState: this.currentState,
-      fields: this.fields,
-      stages: this.stages,
-    };
-  }
-
-  getStage(id: string): Stage | null {
-    return this.stages.get(id) || null;
-  }
-
-  get currentStage(): Stage {
-    let current: Stage | null = null;
-    this.stages.forEach((stage) => {
-      if (stage.isActive) {
-        current = stage;
-      }
-    });
-
-    return current!;
-  }
-
-  goToStage(target: 'next' | 'previous'): void {
-    const current = this.currentStage;
-    switch (target) {
-      case 'previous':
-        this.stageManager.goToPreviousStage(current.id);
-        break;
-      case 'next':
-        this.stageManager.goToNextStage(current.id);
-        break;
-    }
-  }
-
-  validate() {
-    if (this.allFieldsValid()) {
-      this.goToState(FormState.SUBMITTABLE);
-    } else {
-      this.goToState(FormState.NOT_SUBMITTABLE);
-    }
-
-    this.validateStages();
-  }
-
-  validateStages() {
-    this.stages.forEach((stage) => {
-      stage.validate();
-    });
-  }
-
-  private stageFieldsValid(stageId: string): boolean {
-    const results: boolean[] = [];
-    this.fields.forEach((field) => {
-      if (field.stageId === stageId) {
-        results.push(field.currentState === FieldState.VALID);
-      }
-    });
-
-    return results.every((state) => state);
-  }
-
-  dispatch(
-    action: ActionKey,
-    payload: ActionPayload<ActionKey>,
-    observerId?: string | undefined
-  ): void {
-    const command = new Command(this.worker, action, payload, this.copyData());
-
-    const result = command.execute();
-
-    this.fields = result.fields;
-    this.currentState = result.currentState;
-    this.stages = result.stages!;
-
-    this.eventBus.publish(action, observerId);
   }
 }
 
 export class Form {
-  constructor(
-    private formId: string,
-    private type: FormType & Partial<Stageable>,
-    private eventBus: EventBus
-  ) {
-    this.eventBus.subscribe(this.formId, this.type.handleUpdates);
+  isProxy: boolean;
+  type: FormType & Partial<Stageable>;
+
+  constructor(type: FormType & Partial<Stageable>) {
+    this.type = type;
+    this.isProxy = false;
   }
 }

@@ -10,11 +10,11 @@ export function Input({
   label,
   isRequired,
   value,
-  handleChange,
   state,
-  error,
-  isDisabled,
-}: InputProps) {
+  handleChange,
+}: // error,
+// isDisabled,
+InputProps) {
   return (
     <div style={{ marginTop: '1rem' }}>
       {label && (
@@ -30,11 +30,11 @@ export function Input({
           type='text'
           value={value || ''}
           onChange={(e) => handleChange(e.target.value)}
-          disabled={isDisabled}
+          // disabled={isDisabled}
         />
-        {!isDisabled && error && (
+        {/* {!isDisabled && error && (
           <span style={{ color: 'red', fontSize: '.75rem' }}>{error}</span>
-        )}
+        )} */}
       </div>
     </div>
   );

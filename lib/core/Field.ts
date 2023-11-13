@@ -8,13 +8,16 @@ export type FieldSideEffects = {
   validate: string[];
 };
 
+export type InitialFieldData = {
+  isRequired: boolean;
+  initialValue: FieldValue;
+};
+
 export type FieldData = {
   isRequired: boolean;
-  initialValue: FieldValue | undefined;
-  validators?: ((data: Record<string, FieldValue>) => Promise<string>)[];
-  disable?: boolean | ((data: Record<string, FieldValue>) => boolean);
-  sideEffects?: FieldSideEffects;
-  stage: string | undefined;
+  currentState: FieldState;
+  error: string;
+  value: FieldValue;
 };
 
 interface StageableField {
@@ -56,19 +59,16 @@ abstract class AbstractField implements FieldType {
 
   constructor(
     fieldId: string,
-    data: FieldData,
-    protected dispatch: FormDispatch,
+    data: InitialFieldData,
+    protected dispatchEvent: FormDispatch,
     protected validateForm: () => void,
-    private getFieldData: () => Record<string, FieldValue>
+    private getFieldsData: () => Record<string, FieldValue>
   ) {
     this.id = fieldId;
     this.uid = Math.random().toString(36).substring(2, 8);
     this.isRequired = data.isRequired;
     this.initialValue = data.initialValue;
     this.value = data.initialValue;
-    this.validators = data.validators;
-    this.disable = data.disable;
-    this.sideEffects = data.sideEffects;
     this.currentState = data.isRequired
       ? data.initialValue
         ? FieldState.VALID
@@ -80,15 +80,16 @@ abstract class AbstractField implements FieldType {
 
   protected goToState(state: FieldState, error?: string): void {
     if (this.stateManager.canTransitionTo(this.currentState, state)) {
-      this.dispatch(
-        'SET_FIELD_STATE',
-        {
-          id: this.id,
-          state,
-          error: error || '',
-        }
-        // this.uid
-      );
+      // this.dispatchEvent({
+      //   action: 'UPDATE_FIELD',
+      //   fieldId: this.id,
+      //   fieldData: {
+      //     value: this.value,
+      //     isRequired: this.isRequired,
+      //     currentState: state,
+      //     error: error || '',
+      //   },
+      // });
     }
     this.validateForm();
   }
@@ -127,7 +128,7 @@ abstract class AbstractField implements FieldType {
 
   getIsDisabled(): boolean {
     if (this.disable !== undefined) {
-      const data = this.getFieldData();
+      const data = this.getFieldsData();
       return typeof this.disable === 'function'
         ? this.disable(data)
         : this.disable;
@@ -145,7 +146,7 @@ abstract class AbstractField implements FieldType {
   }
 
   async validate() {
-    const data = this.getFieldData();
+    const data = this.getFieldsData();
     const value = this.value;
 
     // Kicking off validation
@@ -173,27 +174,6 @@ abstract class AbstractField implements FieldType {
 }
 
 export class BasicField extends AbstractField {}
-
-export class StageField extends AbstractField implements StageableField {
-  private stageId: string;
-
-  constructor(
-    fieldId: string,
-    data: FieldData,
-    dispatch: FormDispatch,
-    validateForm: () => void,
-    getFieldData: () => Record<string, FieldValue>
-  ) {
-    super(fieldId, data, dispatch, validateForm, getFieldData);
-    this.stageId = data.stage!;
-  }
-
-  // Specific implementations
-
-  getStageId(): string {
-    return this.stageId;
-  }
-}
 
 export class Field {
   constructor(private fieldType: FieldType & Partial<StageableField>) {
@@ -254,5 +234,18 @@ export class Field {
 
   validate() {
     return this.fieldType.validate();
+  }
+
+  get data(): FieldData {
+    return {
+      value: this.value,
+      isRequired: this.isRequired,
+      currentState: this.currentState,
+      error: this.error,
+    };
+  }
+
+  update(value: FieldValue) {
+    this.value = value;
   }
 }
