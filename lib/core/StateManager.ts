@@ -8,6 +8,7 @@ export type NodeType = 'FORM' | 'STAGE' | 'FIELD';
 export enum FormState {
   SUBMITTABLE = 'SUBMITTABLE',
   NOT_SUBMITTABLE = 'NOT_SUBMITTABLE',
+  VALIDATING = 'VALIDATING',
   SUBMITTING = 'SUBMITTING',
   SUCCESS = 'SUCCESS',
   ERROR = 'ERROR',
@@ -35,11 +36,17 @@ class NodeState implements State {
     switch (nodeType) {
       case 'FORM':
         this.stateTransitions.set(FormState.NOT_SUBMITTABLE, [
-          FormState.SUBMITTABLE,
+          FormState.VALIDATING,
+          // FormState.SUBMITTABLE,
         ]);
         this.stateTransitions.set(FormState.SUBMITTABLE, [
-          FormState.NOT_SUBMITTABLE,
+          // FormState.NOT_SUBMITTABLE,
+          FormState.VALIDATING,
           FormState.SUBMITTING,
+        ]);
+        this.stateTransitions.set(FormState.VALIDATING, [
+          FormState.NOT_SUBMITTABLE,
+          FormState.SUBMITTABLE,
         ]);
         this.stateTransitions.set(FormState.SUBMITTING, [
           FormState.SUCCESS,

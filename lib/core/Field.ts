@@ -55,6 +55,7 @@ abstract class AbstractField implements FieldType {
     private formId: string,
     data: InitialFieldData,
     private getFieldValues: () => Record<string, FieldValue>,
+    private validateForm: () => void,
     private eventBus: EventBus
   ) {
     this.isRequired = data.isRequired;
@@ -84,7 +85,7 @@ abstract class AbstractField implements FieldType {
     if (type === 'SET_FIELD_VALUE' && this.id === event.fieldId) {
       this.value = event.value;
       this.publishFieldData();
-      this.validate();
+      this.validate().then(() => this.validateForm());
     }
   }
 
@@ -123,6 +124,7 @@ abstract class AbstractField implements FieldType {
 
     // Kicking off validation
     this.goToState(FieldState.VALIDATING);
+    // this.setFormState(FormState.VALIDATING);
 
     // First stop, required fields!
     if (!value && this.isRequired) {

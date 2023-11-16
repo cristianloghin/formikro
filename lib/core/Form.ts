@@ -25,8 +25,6 @@ export type InitialFormOptions = {
 
 export interface FormType {
   submitForm(): Promise<void>;
-  getFormState(): FormState;
-  handleUpdates(event: FormEvent): void;
 }
 
 abstract class AbstractForm implements FormType {
@@ -54,20 +52,27 @@ abstract class AbstractForm implements FormType {
     this.eventBus.subscribe(this.formId, 'form', this.handleUpdates);
   }
 
-  handleUpdates(event: FormEvent): void {
+  private handleUpdates(event: FormEvent): void {
     const { type } = event;
 
     if (type === 'REQUEST_FORM_DATA' || type === 'SET_FIELD_VALUE') {
       this.publishFormData();
     }
+
+    if (type === 'FIELD_DATA_RESPONSE') {
+      const { fieldData } = event;
+      if (fieldData.currentState === FieldState.VALIDATING) {
+        this.goToState(FormState.VALIDATING);
+      }
+    }
   }
 
+  protected abstract validate(): void;
   protected abstract createField(
     formId: string,
     fieldId: string,
     fieldData: unknown
   ): Field;
-  abstract validate(): void;
 
   private publishFormData() {
     this.eventBus.publish(this.formId, {
@@ -105,10 +110,6 @@ abstract class AbstractForm implements FormType {
       });
   }
 
-  getFormState(): FormState {
-    return this.currentState;
-  }
-
   protected allFieldsValid() {
     const results: boolean[] = [];
     this.fields.forEach((field) => {
@@ -121,14 +122,7 @@ abstract class AbstractForm implements FormType {
   protected goToState(state: FormState) {
     if (this.stateManager.canTransitionTo(this.currentState, state)) {
       this.currentState = state;
-      this.eventBus.publish(this.formId, {
-        type: 'FORM_UPDATED',
-        formId: this.formId,
-        formData: {
-          currentState: this.currentState,
-          fields: this.getFieldValues(),
-        },
-      });
+      this.publishFormData();
     }
   }
 }
@@ -145,6 +139,7 @@ export class BasicForm extends AbstractForm {
         formId,
         fieldData,
         this.getFieldValues,
+        this.validate,
         this.eventBus
       )
     );
@@ -152,6 +147,7 @@ export class BasicForm extends AbstractForm {
   }
 
   validate() {
+    console.log('Validating form...', this.currentState, this.allFieldsValid());
     if (this.allFieldsValid()) {
       this.goToState(FormState.SUBMITTABLE);
     } else {
