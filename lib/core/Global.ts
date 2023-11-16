@@ -26,10 +26,6 @@ class Global {
     }
   }
 
-  getForm(formId: string): FormType | undefined {
-    return this.forms.get(formId)?.type;
-  }
-
   getClient(formId: string): Client {
     // Create FormProxy if client created before form
     if (!this.forms.has(formId)) {

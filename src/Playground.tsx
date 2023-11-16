@@ -22,15 +22,19 @@ function saveBar(data: BarForm) {
 }
 
 export function Playground() {
-  const barClient = useFormikroClient('bar-form');
+  const { submit: submitBar, canSubmit } = useFormikroClient('bar-form');
 
   const BarForm = useFormikro('bar-form', {
     onSubmit: saveBar,
     fields: {
-      trousers: { isRequired: true, initialValue: 'bar' },
+      trousers: {
+        isRequired: true,
+        initialValue: 'bar',
+        validators: [(fields) => validateTrousers(fields.trousers)],
+      },
       maker: { isRequired: false, initialValue: 'Joes' },
       dimensions: { isRequired: true, initialValue: 56 },
-      shade: { isRequired: false },
+      shade: { isRequired: true },
     },
   });
 
@@ -38,7 +42,9 @@ export function Playground() {
     <div>
       <h1>Playground</h1>
       <div style={{ marginBottom: 20 }}>
-        <button onClick={barClient.submit}>Submit</button>
+        <button onClick={submitBar} disabled={!canSubmit}>
+          Submit
+        </button>
       </div>
       <BarForm>
         <BarForm.Field
@@ -56,4 +62,19 @@ export function Playground() {
       </BarForm>
     </div>
   );
+}
+
+function validateTrousers(value: string) {
+  console.log('Validating trousers');
+  return new Promise<string>((resolve, reject) => {
+    setTimeout(() => {
+      if (value === 'pants') {
+        reject('No pants please.');
+      } else if (value.length < 3) {
+        reject('Longer pants please.');
+      } else {
+        resolve('');
+      }
+    }, 1500);
+  });
 }

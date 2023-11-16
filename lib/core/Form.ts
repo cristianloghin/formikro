@@ -1,13 +1,12 @@
 import { EventBus, FormEvent } from './EventBus';
-import {
-  BasicField,
-  Field,
-  InitialFieldData,
-  FieldValue,
-  FieldData,
-} from './Field';
+import { BasicField, Field, InitialFieldData, FieldValue } from './Field';
 import { Stage } from './Stage';
 import { FieldState, FormState, StateManager } from './StateManager';
+
+export type FormData = {
+  currentState: FormState;
+  fields: Record<string, FieldValue>;
+};
 
 export type FormDispatch = (event: FormEvent) => void;
 
@@ -25,8 +24,6 @@ export type InitialFormOptions = {
 };
 
 export interface FormType {
-  getFieldData(id: string): FieldData | undefined;
-  getFields(): Record<string, FieldValue>;
   submitForm(): Promise<void>;
   getFormState(): FormState;
   handleUpdates(event: FormEvent): void;
@@ -34,8 +31,8 @@ export interface FormType {
 
 abstract class AbstractForm implements FormType {
   protected currentState: FormState;
-  protected fields = new Map<string, Field>();
   protected stateManager = new StateManager('FORM');
+  protected fields = new Map<string, Field>();
   protected onSubmit: (fields: Record<string, FieldValue>) => Promise<unknown>;
 
   constructor(
@@ -46,73 +43,44 @@ abstract class AbstractForm implements FormType {
     this.currentState = FormState.NOT_SUBMITTABLE;
     this.handleUpdates = this.handleUpdates.bind(this);
     this.validate = this.validate.bind(this);
-    this.getFieldData = this.getFieldData.bind(this);
     this.onSubmit = options.onSubmit;
 
     // Create fields
     Object.entries(options.fields).forEach(([fieldName, fieldData]) => {
-      const fieldInstance = this.createField(fieldName, fieldData);
+      const fieldInstance = this.createField(this.formId, fieldName, fieldData);
       this.fields.set(fieldName, fieldInstance);
     });
 
-    this.eventBus.subscribe(this.formId, this.handleUpdates);
+    this.eventBus.subscribe(this.formId, 'form', this.handleUpdates);
   }
 
   handleUpdates(event: FormEvent): void {
-    switch (event.action) {
-      case 'INITIALIZE_FIELD': {
-        const { fieldId } = event;
-        const field = this.fields.get(fieldId);
-        if (field) {
-          this.eventBus.publish(this.formId, {
-            action: 'FIELD_INITIALIZED',
-            fieldId,
-            fieldData: field.data,
-          });
-        }
-        break;
-      }
-      case 'UPDATE_FIELD': {
-        const { fieldId, value } = event;
-        const field = this.fields.get(fieldId);
+    const { type } = event;
 
-        if (field) {
-          // validate field -> update state
-          field.update(value);
-
-          this.eventBus.publish(this.formId, {
-            action: 'FIELD_UPDATED',
-            fieldId,
-            fieldData: field.data,
-          });
-
-          // run side effects -> publish events
-        }
-        break;
-      }
-      case 'SUBMIT_FORM': {
-        this.submitForm();
-        break;
-      }
+    if (type === 'REQUEST_FORM_DATA' || type === 'SET_FIELD_VALUE') {
+      this.publishFormData();
     }
   }
 
-  protected abstract createField(fieldName: string, fieldData: unknown): Field;
+  protected abstract createField(
+    formId: string,
+    fieldId: string,
+    fieldData: unknown
+  ): Field;
   abstract validate(): void;
 
-  protected dispatchEvent(event: FormEvent): void {
-    this.eventBus.publish(this.formId, event);
+  private publishFormData() {
+    this.eventBus.publish(this.formId, {
+      type: 'FORM_DATA_RESPONSE',
+      formId: this.formId,
+      formData: {
+        currentState: this.currentState,
+        fields: this.getFieldValues(),
+      },
+    });
   }
 
-  getFieldData(id: string): FieldData | undefined {
-    const field = this.fields.get(id);
-    if (field) {
-      return field.data;
-    }
-    return undefined;
-  }
-
-  getFields(): Record<string, FieldValue> {
+  getFieldValues = (): Record<string, FieldValue> => {
     const fields: Record<string, FieldValue> = {};
 
     this.fields.forEach((field, key) => {
@@ -120,10 +88,10 @@ abstract class AbstractForm implements FormType {
     });
 
     return fields;
-  }
+  };
 
   async submitForm(): Promise<void> {
-    const fields = this.getFields();
+    const fields = this.getFieldValues();
     this.goToState(FormState.SUBMITTING);
 
     return this.onSubmit(fields)
@@ -135,16 +103,6 @@ abstract class AbstractForm implements FormType {
         this.goToState(FormState.ERROR);
         throw error;
       });
-  }
-
-  getFieldsData(): Record<string, FieldValue> {
-    const result: Record<string, FieldValue> = {};
-
-    this.fields.forEach((field, key) => {
-      result[key] = field.value;
-    });
-
-    return result;
   }
 
   getFormState(): FormState {
@@ -162,20 +120,32 @@ abstract class AbstractForm implements FormType {
 
   protected goToState(state: FormState) {
     if (this.stateManager.canTransitionTo(this.currentState, state)) {
-      // this.dispatch('SET_FORM_STATE', { state });
+      this.currentState = state;
+      this.eventBus.publish(this.formId, {
+        type: 'FORM_UPDATED',
+        formId: this.formId,
+        formData: {
+          currentState: this.currentState,
+          fields: this.getFieldValues(),
+        },
+      });
     }
   }
 }
 
 export class BasicForm extends AbstractForm {
-  protected createField(fieldName: string, fieldData: InitialFieldData): Field {
+  protected createField(
+    formId: string,
+    fieldId: string,
+    fieldData: InitialFieldData
+  ): Field {
     const fieldInstance = new Field(
       new BasicField(
-        fieldName,
+        fieldId,
+        formId,
         fieldData,
-        this.dispatchEvent,
-        this.validate,
-        this.getFieldsData
+        this.getFieldValues,
+        this.eventBus
       )
     );
     return fieldInstance;

@@ -1,25 +1,34 @@
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { deepEqual, generateUID } from '.';
 import Global from '../core/Global';
+import { FieldObserver } from '../core/Observer';
 import { FieldData, FieldValue } from '../core/Field';
-import { useCallback, useEffect, useState } from 'react';
+
+const observerUID = generateUID();
 
 export function useField(formId: string, fieldId: string) {
   const client = Global.getClient(formId);
-  const [fieldData, setFieldData] = useState<Partial<FieldData>>();
+  const [fieldData, setFieldData] = useState<FieldData>();
 
-  // set up an observer
-  const fieldObserver = useCallback((field: Partial<FieldData>) => {
-    setFieldData((current) => {
-      if (current === field) {
-        return current;
-      }
-      return field;
-    });
-  }, []);
+  // set up a field observer
+  const fieldObserver = useMemo(
+    () =>
+      new FieldObserver((data) => {
+        setFieldData((current) => {
+          if (deepEqual(current, data)) {
+            return current;
+          }
 
-  const fieldHandler = useCallback(
+          return data;
+        });
+      }),
+    []
+  );
+
+  const handleChange = useCallback(
     (value: FieldValue) => {
       client.dispatchEvent({
-        action: 'UPDATE_FIELD',
+        type: 'SET_FIELD_VALUE',
         fieldId,
         value,
       });
@@ -28,9 +37,10 @@ export function useField(formId: string, fieldId: string) {
   );
 
   useEffect(() => {
-    const unsubscribe = client.subscribe(fieldId, fieldObserver);
+    console.log(observerUID);
+    const unsubscribe = client.subscribe(fieldId, observerUID, fieldObserver);
     // get intial field data
-    client.dispatchEvent({ action: 'INITIALIZE_FIELD', fieldId });
+    client.dispatchEvent({ type: 'REQUEST_FIELD_DATA', fieldId });
 
     return () => {
       unsubscribe();
@@ -38,9 +48,7 @@ export function useField(formId: string, fieldId: string) {
   }, [client, fieldId, fieldObserver]);
 
   return {
-    isRequired: fieldData?.isRequired,
-    value: fieldData?.value,
-    handleChange: fieldHandler,
-    state: fieldData?.currentState,
+    ...fieldData,
+    handleChange,
   };
 }

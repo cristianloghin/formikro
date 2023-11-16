@@ -4,9 +4,12 @@ import { FieldValue } from '../core/Field';
 import { FieldProps } from '../components/Field';
 import { Field } from '../components/Field';
 
+type Validator<T> = (data: T) => Promise<string>;
+
 type FormikroField<T, F extends keyof T> = {
   isRequired: boolean;
   initialValue?: T[F];
+  validators?: Validator<T>[];
 };
 
 export type FormikroOptions<T> = {

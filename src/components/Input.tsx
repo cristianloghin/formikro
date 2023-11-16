@@ -11,9 +11,9 @@ export function Input({
   isRequired,
   value,
   state,
+  error,
   handleChange,
-}: // error,
-// isDisabled,
+}: // isDisabled,
 InputProps) {
   return (
     <div style={{ marginTop: '1rem' }}>
@@ -35,6 +35,9 @@ InputProps) {
         {/* {!isDisabled && error && (
           <span style={{ color: 'red', fontSize: '.75rem' }}>{error}</span>
         )} */}
+        {error && (
+          <span style={{ color: 'red', fontSize: '.75rem' }}>{error}</span>
+        )}
       </div>
     </div>
   );

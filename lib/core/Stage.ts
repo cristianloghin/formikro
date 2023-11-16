@@ -1,6 +1,10 @@
 import { FormDispatch } from './Form';
 import { StateManager, StageState } from './StateManager';
 
+export type StageData = {
+  currentState: StageState;
+};
+
 export class Stage {
   id: string;
   index: number;

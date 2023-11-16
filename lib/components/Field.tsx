@@ -10,6 +10,7 @@ export interface DefaultFieldProps {
   value: FieldValue;
   handleChange: (value: FieldValue) => void;
   state: FieldState | undefined;
+  error?: string;
 }
 
 export interface FieldProps<
@@ -22,7 +23,13 @@ export interface FieldProps<
 
 export function Field<T>(formId: string, props: FieldProps<T>) {
   const { id } = props;
-  const { isRequired, value, handleChange, state } = useField(formId, id);
+  const {
+    isRequired,
+    value,
+    handleChange,
+    currentState: state,
+    error,
+  } = useField(formId, id);
 
   return props.render({
     id,
@@ -31,5 +38,6 @@ export function Field<T>(formId: string, props: FieldProps<T>) {
     value,
     handleChange,
     state,
+    error,
   });
 }
