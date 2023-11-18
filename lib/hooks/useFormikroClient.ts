@@ -6,9 +6,9 @@ import { deepEqual, generateUID } from '.';
 
 const observerUID = generateUID();
 
-export function useFormikroClient(formId: string) {
+export function useFormikroClient<T>(formId: string) {
   const client = Global.getClient(formId);
-  const [formData, setFormData] = useState<FormData>();
+  const [formData, setFormData] = useState<FormData<T>>();
 
   // create a form observer
   const formObserver = useMemo(

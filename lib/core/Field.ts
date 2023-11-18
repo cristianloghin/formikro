@@ -2,17 +2,24 @@
 import { EventBus, FormEvent } from './EventBus';
 import { StateManager, FieldState } from './StateManager';
 
-export type FieldValue = string | number | undefined;
+type DefaultFieldValue = string | number | undefined;
+export type FieldValue<T = DefaultFieldValue> = T extends undefined
+  ? DefaultFieldValue
+  : T | undefined;
 
-export type FieldSideEffects = {
-  clear: string[];
-  validate: string[];
-};
+type FieldValidators = Array<
+  (field: FieldValue, fields: Record<string, Field>) => Promise<string>
+>;
+
+type FieldSideEffects = Array<
+  (field: FieldValue, fields: Record<string, Field>) => void
+>;
 
 export type InitialFieldData = {
   isRequired: boolean;
   initialValue: FieldValue;
-  validators?: Array<(fields: Record<string, FieldValue>) => Promise<string>>;
+  validators?: FieldValidators;
+  sideEffects?: FieldSideEffects;
 };
 
 export type FieldData = {
@@ -20,7 +27,6 @@ export type FieldData = {
   currentState: FieldState;
   error: string;
   value: FieldValue;
-  validators?: Array<(fields: Record<string, FieldValue>) => void>;
 };
 
 interface StageableField {
@@ -28,40 +34,42 @@ interface StageableField {
 }
 
 export interface FieldType {
+  id: string;
+  formId: string;
+  eventBus: EventBus;
   getValue(): FieldValue;
   getCurrentState(): FieldState;
-  validate(): Promise<void>;
 }
 
 abstract class AbstractField implements FieldType {
   protected isRequired: boolean;
   protected initialValue: FieldValue;
   protected value: FieldValue;
-  protected validators:
-    | ((data: Record<string, FieldValue>) => Promise<string>)[]
-    | undefined;
-  protected error: string = '';
-  protected disable:
-    | boolean
-    | ((data: Record<string, FieldValue>) => boolean)
-    | undefined;
+  protected validators: FieldValidators | undefined;
   protected sideEffects: FieldSideEffects | undefined;
+  protected error: string = '';
   protected currentState: FieldState;
   protected stateManager = new StateManager('FIELD');
+
+  id: string;
+  formId: string;
+  eventBus: EventBus;
   validate: () => Promise<void>;
 
   constructor(
-    private id: string,
-    private formId: string,
+    id: string,
+    formId: string,
     data: InitialFieldData,
-    private getFieldValues: () => Record<string, FieldValue>,
-    private validateForm: () => void,
-    private eventBus: EventBus
+    private getFields: (options?: {
+      exclude?: string[];
+    }) => Record<string, Field>,
+    eventBus: EventBus
   ) {
     this.isRequired = data.isRequired;
     this.initialValue = data.initialValue;
     this.value = data.initialValue;
     this.validators = data.validators;
+    this.sideEffects = data.sideEffects;
     this.currentState = data.isRequired
       ? data.initialValue
         ? FieldState.VALID
@@ -70,6 +78,9 @@ abstract class AbstractField implements FieldType {
 
     this.handleUpdates = this.handleUpdates.bind(this);
 
+    this.id = id;
+    this.formId = formId;
+    this.eventBus = eventBus;
     this.eventBus.subscribe(this.formId, this.id, this.handleUpdates);
     this.validate = this.debounce(this.asyncValidation, 360); // 360ms debounce
     this.validate = this.validate.bind(this);
@@ -85,7 +96,10 @@ abstract class AbstractField implements FieldType {
     if (type === 'SET_FIELD_VALUE' && this.id === event.fieldId) {
       this.value = event.value;
       this.publishFieldData();
-      this.validate().then(() => this.validateForm());
+      this.validate().then(() => {
+        this.effects();
+        this.eventBus.publish(this.formId, { type: 'VALIDATE_FORM' });
+      });
     }
   }
 
@@ -118,13 +132,18 @@ abstract class AbstractField implements FieldType {
     return this.currentState;
   }
 
+  private effects(): void {
+    const fields = this.getFields({ exclude: [this.id] });
+    const value = this.value;
+    this.sideEffects?.map((fn) => fn(value, fields));
+  }
+
   private async asyncValidation(): Promise<void> {
-    const fields = this.getFieldValues();
+    const fields = this.getFields({ exclude: [this.id] });
     const value = this.value;
 
     // Kicking off validation
     this.goToState(FieldState.VALIDATING);
-    // this.setFormState(FormState.VALIDATING);
 
     // First stop, required fields!
     if (!value && this.isRequired) {
@@ -135,7 +154,7 @@ abstract class AbstractField implements FieldType {
     if (this.validators && Array.isArray(this.validators)) {
       try {
         // Run 'em all and pass in all field values
-        await Promise.all(this.validators.map((fn) => fn(fields)));
+        await Promise.all(this.validators.map((fn) => fn(value, fields)));
         return this.goToState(FieldState.VALID);
       } catch (err) {
         return this.goToState(FieldState.INVALID, err as string);
@@ -170,9 +189,11 @@ abstract class AbstractField implements FieldType {
 
 export class BasicField extends AbstractField {}
 
-export class Field {
+export class Field<T = DefaultFieldValue> {
+  private eventBus: EventBus;
+
   constructor(private fieldType: FieldType & Partial<StageableField>) {
-    this.validate = this.validate.bind(this);
+    this.eventBus = this.fieldType.eventBus;
   }
 
   get stageId() {
@@ -184,14 +205,18 @@ export class Field {
   }
 
   get value() {
-    return this.fieldType.getValue();
+    return this.fieldType.getValue() as FieldValue<T>;
+  }
+
+  set value(value: FieldValue<T>) {
+    this.eventBus.publish(this.fieldType.formId, {
+      type: 'SET_FIELD_VALUE',
+      fieldId: this.fieldType.id,
+      value: value as FieldValue,
+    });
   }
 
   get currentState(): FieldState {
     return this.fieldType.getCurrentState();
-  }
-
-  validate() {
-    return this.fieldType.validate();
   }
 }

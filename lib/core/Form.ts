@@ -3,9 +3,9 @@ import { BasicField, Field, InitialFieldData, FieldValue } from './Field';
 import { Stage } from './Stage';
 import { FieldState, FormState, StateManager } from './StateManager';
 
-export type FormData = {
+export type FormData<T> = {
   currentState: FormState;
-  fields: Record<string, FieldValue>;
+  fields: Record<Extract<keyof T, string>, Field>;
 };
 
 export type FormDispatch = (event: FormEvent) => void;
@@ -18,7 +18,11 @@ export interface Stageable {
 }
 
 export type InitialFormOptions = {
-  onSubmit: (fields: Record<string, FieldValue>) => Promise<unknown>;
+  submit: {
+    submitFn: (fields: Record<string, FieldValue>) => Promise<unknown>;
+    onSuccess?: (response: unknown) => void;
+    onError?: (error: unknown) => void;
+  };
   fields: Record<string, unknown>;
   stages?: string[];
 };
@@ -32,6 +36,8 @@ abstract class AbstractForm implements FormType {
   protected stateManager = new StateManager('FORM');
   protected fields = new Map<string, Field>();
   protected onSubmit: (fields: Record<string, FieldValue>) => Promise<unknown>;
+  private onSubmitSuccess: ((response: unknown) => void) | undefined;
+  private onSubmitError: ((error: unknown) => void) | undefined;
 
   constructor(
     protected formId: string,
@@ -40,8 +46,10 @@ abstract class AbstractForm implements FormType {
   ) {
     this.currentState = FormState.NOT_SUBMITTABLE;
     this.handleUpdates = this.handleUpdates.bind(this);
-    this.validate = this.validate.bind(this);
-    this.onSubmit = options.onSubmit;
+
+    this.onSubmit = options.submit.submitFn;
+    this.onSubmitSuccess = options.submit.onSuccess;
+    this.onSubmitError = options.submit.onError;
 
     // Create fields
     Object.entries(options.fields).forEach(([fieldName, fieldData]) => {
@@ -61,9 +69,18 @@ abstract class AbstractForm implements FormType {
 
     if (type === 'FIELD_DATA_RESPONSE') {
       const { fieldData } = event;
+      // Change form state is a field is validating
       if (fieldData.currentState === FieldState.VALIDATING) {
         this.goToState(FormState.VALIDATING);
       }
+    }
+
+    if (type === 'VALIDATE_FORM') {
+      this.validate();
+    }
+
+    if (type === 'SUBMIT_FORM') {
+      this.submitForm();
     }
   }
 
@@ -80,16 +97,38 @@ abstract class AbstractForm implements FormType {
       formId: this.formId,
       formData: {
         currentState: this.currentState,
-        fields: this.getFieldValues(),
+        fields: this.getFields(),
       },
     });
   }
 
-  getFieldValues = (): Record<string, FieldValue> => {
+  getFields = (options?: { exclude?: string[] }) => {
+    const fields: Record<string, Field> = {};
+
+    this.fields.forEach((field, key) => {
+      if (options?.exclude) {
+        if (!options.exclude.includes(key)) {
+          fields[key] = field;
+        }
+      } else {
+        fields[key] = field;
+      }
+    });
+
+    return fields;
+  };
+
+  getFieldValues = (options?: { exclude?: string[]; valuesOnly?: boolean }) => {
     const fields: Record<string, FieldValue> = {};
 
     this.fields.forEach((field, key) => {
-      fields[key] = field.value;
+      if (options?.exclude) {
+        if (!options.exclude.includes(key)) {
+          fields[key] = field.value;
+        }
+      } else {
+        fields[key] = field.value;
+      }
     });
 
     return fields;
@@ -100,13 +139,20 @@ abstract class AbstractForm implements FormType {
     this.goToState(FormState.SUBMITTING);
 
     return this.onSubmit(fields)
-      .then(() => {
+      .then((res) => {
         this.goToState(FormState.SUCCESS);
+        if (this.onSubmitSuccess) {
+          this.onSubmitSuccess(res);
+        }
         return;
       })
       .catch((error) => {
         this.goToState(FormState.ERROR);
-        throw error;
+        if (this.onSubmitError) {
+          this.onSubmitError(error);
+        } else {
+          throw error;
+        }
       });
   }
 
@@ -134,20 +180,12 @@ export class BasicForm extends AbstractForm {
     fieldData: InitialFieldData
   ): Field {
     const fieldInstance = new Field(
-      new BasicField(
-        fieldId,
-        formId,
-        fieldData,
-        this.getFieldValues,
-        this.validate,
-        this.eventBus
-      )
+      new BasicField(fieldId, formId, fieldData, this.getFields, this.eventBus)
     );
     return fieldInstance;
   }
 
   validate() {
-    console.log('Validating form...', this.currentState, this.allFieldsValid());
     if (this.allFieldsValid()) {
       this.goToState(FormState.SUBMITTABLE);
     } else {

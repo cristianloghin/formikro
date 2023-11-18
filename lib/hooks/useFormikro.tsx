@@ -1,19 +1,34 @@
 import { useCallback } from 'react';
 import Global from '../core/Global';
-import { FieldValue } from '../core/Field';
+import { Field as FieldInstance, FieldValue } from '../core/Field';
 import { FieldProps } from '../components/Field';
 import { Field } from '../components/Field';
 
-type Validator<T> = (data: T) => Promise<string>;
+type SubmitOptions<T> = {
+  submitFn: (fields: T) => Promise<unknown>;
+  onSuccess?: (response: unknown) => void;
+  onError?: (error: unknown) => void;
+};
+
+type Validator<T, F extends keyof T> = (
+  field: T[F],
+  fields: { [key in Exclude<keyof T, F>]: FieldInstance<T[key]> }
+) => Promise<string>;
+
+type SideEffect<T, F extends keyof T> = (
+  field: T[F],
+  fields: { [key in Exclude<keyof T, F>]: FieldInstance<T[key]> }
+) => void;
 
 type FormikroField<T, F extends keyof T> = {
   isRequired: boolean;
   initialValue?: T[F];
-  validators?: Validator<T>[];
+  validators?: Validator<T, F>[];
+  sideEffects?: SideEffect<T, F>[];
 };
 
 export type FormikroOptions<T> = {
-  onSubmit: (fields: T) => Promise<unknown>;
+  submit: SubmitOptions<T>;
   fields: {
     [field in keyof T]: FormikroField<T, field>;
   };

@@ -37,10 +37,8 @@ class NodeState implements State {
       case 'FORM':
         this.stateTransitions.set(FormState.NOT_SUBMITTABLE, [
           FormState.VALIDATING,
-          // FormState.SUBMITTABLE,
         ]);
         this.stateTransitions.set(FormState.SUBMITTABLE, [
-          // FormState.NOT_SUBMITTABLE,
           FormState.VALIDATING,
           FormState.SUBMITTING,
         ]);
@@ -52,6 +50,8 @@ class NodeState implements State {
           FormState.SUCCESS,
           FormState.ERROR,
         ]);
+        this.stateTransitions.set(FormState.ERROR, [FormState.VALIDATING]);
+        this.stateTransitions.set(FormState.SUCCESS, [FormState.VALIDATING]);
         break;
       case 'STAGE':
         this.stateTransitions.set(StageState.INCOMPLETE, [StageState.COMPLETE]);

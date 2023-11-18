@@ -16,10 +16,11 @@ export type FormEvent =
     }
   | { type: 'REQUEST_FORM_DATA' }
   | { type: 'SUBMIT_FORM' }
+  | { type: 'VALIDATE_FORM' }
   | {
       type: 'FORM_UPDATED' | 'FORM_DATA_RESPONSE';
       formId: string;
-      formData: FormData;
+      formData: FormData<unknown>;
     }
   | {
       type: 'STAGE_UPDATED';
